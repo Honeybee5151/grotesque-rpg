@@ -1,10 +1,14 @@
 name: Release
 
-# Push a tag like v0.2.0 and this builds the game and publishes a GitHub Release.
-# The in-game updater looks for the `game.pck` asset of the latest release.
+# Releases are driven by the VERSION file: change it (e.g. 0.1.0 -> 0.2.0), push to main, and this
+# builds the game, creates the v0.2.0 tag and publishes a GitHub Release. Pushing a v* tag by hand
+# also works. The in-game updater looks for the `game.pck` asset of the latest release.
 on:
   push:
+    branches: [main]
+    paths: [VERSION]
     tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -19,8 +23,26 @@ jobs:
       image: barichello/godot-ci:4.4.1
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Work out the version
+        id: v
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="$(tr -d '[:space:]' < VERSION)"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          if [ "${GITHUB_REF_TYPE}" != "tag" ] && git rev-parse -q --verify "refs/tags/v${VERSION}" >/dev/null; then
+            echo "v${VERSION} is already released - nothing to do."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Install export templates
+        if: steps.v.outputs.skip != 'true'
         run: |
           mkdir -p ~/.local/share/godot/export_templates
           if [ ! -d ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable ]; then
@@ -28,16 +50,19 @@ jobs:
           fi
 
       - name: Stamp version and repo into release.cfg
+        if: steps.v.outputs.skip != 'true'
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${{ steps.v.outputs.version }}"
           sed -i "s/^version=.*/version=\"${VERSION}\"/" release.cfg
           sed -i "s|^repo=.*|repo=\"${GITHUB_REPOSITORY}\"|" release.cfg
           cat release.cfg
 
       - name: Import project
+        if: steps.v.outputs.skip != 'true'
         run: godot --headless --import || true
 
       - name: Export Windows, Linux and the update pack
+        if: steps.v.outputs.skip != 'true'
         run: |
           mkdir -p build/windows build/linux
           godot --headless --export-release "Windows Desktop" build/windows/GrotesqueRPG.exe
@@ -48,12 +73,16 @@ jobs:
 
       # macOS export is untested; it must never block a release.
       - name: Export macOS
+        if: steps.v.outputs.skip != 'true'
         continue-on-error: true
         run: godot --headless --export-release "macOS" build/GrotesqueRPG-macos.zip
 
       - name: Publish release
+        if: steps.v.outputs.skip != 'true'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.v.outputs.version }}
+          target_commitish: ${{ github.sha }}
           generate_release_notes: true
           files: |
             build/GrotesqueRPG-windows.zip

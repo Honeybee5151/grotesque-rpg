@@ -19,13 +19,11 @@ cure it with a Salve. The hero can't die in the tutorial (`MERCY` in `scripts/da
    ```
 
 ## Releasing a version
-```
-git tag v0.1.0
-git push origin v0.1.0
-```
-The **Release** workflow (`.github/workflows/release.yml`) stamps the tag and repo name into `release.cfg`,
-exports Windows / Linux (and macOS, best effort) builds, and publishes a GitHub Release with
+Edit the `VERSION` file (e.g. `0.1.0` -> `0.2.0`) and push to `main`. The **Release** workflow
+(`.github/workflows/release.yml`) creates the `v0.2.0` tag itself, stamps the version and repo name into
+`release.cfg`, exports Windows / Linux (and macOS, best effort) builds, and publishes a GitHub Release with
 `GrotesqueRPG-windows.zip`, `GrotesqueRPG-linux.zip`, `GrotesqueRPG-macos.zip` and **`game.pck`**.
+Pushing other changes to `main` does nothing; only a changed `VERSION` ships. Pushing a `v*` tag by hand works too.
 Players download the zip once; after that the game updates itself.
 
 ## Updates
