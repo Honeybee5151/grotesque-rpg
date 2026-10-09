@@ -338,6 +338,13 @@ function Main {
 
     Step 'Preparing checkouts'
     Ensure-Worktrees $wanted
+    $starter = Join-Path $TeamHome 'Start-Team.cmd'
+    if (-not (Test-Path $starter)) {
+        $leaf = Split-Path -Leaf $Repo
+        $body = "@echo off`r`npowershell -NoProfile -ExecutionPolicy Bypass -File `"%~dp0$leaf\team\Start-Team.ps1`" %*`r`nif errorlevel 1 pause`r`n"
+        [IO.File]::WriteAllText($starter, $body)
+        Say "  next time, double-click $starter" DarkGray
+    }
 
     Step "Opening $($wanted.Count) sessions ($Model, effort $Effort)"
     $mode = $Layout
