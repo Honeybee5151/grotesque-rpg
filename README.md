@@ -36,6 +36,15 @@ Players download the zip once; after that the game updates itself.
 - Inside the editor the updater is off. `tools/update_test.sh` tests the whole pipeline against a fake
   local release (`GODOT=/path/to/godot tools/update_test.sh`).
 
+## The agent team (Windows)
+Four Claude Code sessions (Opus 5.5, max effort) build the game in parallel, one PowerShell window
+each, each in its own git worktree: **monster** (monsters and pixel art), **world** (maps, towns, NPCs,
+story), **fights** (combat), **misc** (merges, tooling, releases, everything else). Their shared
+rules are in `CLAUDE.md`, their briefs in `team/roles/`. They message each other by name.
+
+Start them with `team\Start-Team.cmd` (first run installs/sets up what's missing), or from PowerShell:
+`team\Start-Team.ps1 [-Continue] [-Layout Windows|Grid|Tabs] [-Only monster,fights]`.
+
 ## Where things live
 - `scripts/data.gd` — hero, items, enemies (add monsters here)
 - `scripts/main.gd` — battle flow, menus, effects, synthesized sound

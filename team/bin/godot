@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+# Git Bash shim: run the team's Godot 4.4.1 (path in $GODOT, set by team/Start-Team.ps1).
+if [ -z "$GODOT" ]; then
+  echo "GODOT is not set. Start the team with team/Start-Team.ps1" >&2
+  exit 1
+fi
+exe=$(cygpath -u "$GODOT" 2>/dev/null || printf '%s' "$GODOT")
+exec "$exe" "$@"

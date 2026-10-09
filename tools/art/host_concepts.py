@@ -463,23 +463,65 @@ def detail_c(R, m, coiled):
 CONCEPTS = {"a": concept_a, "b": concept_b, "c": concept_c}
 
 
-def compose(img, bg, pos=(108, 4)):
+def compose(img, bg, pos=None):
+    """Place a battler on the cave background the way the battle does (centred at (160, 63))."""
+    h, w = img.shape[:2]
+    if pos is None:
+        pos = (160 - w // 2, 63 - h // 2)
     canvas = bg.copy()
     canvas.alpha_composite(Image.fromarray(img, "RGBA"), pos)
     return canvas
 
 
+LABELS = {"a": ("A  -  The Rider", "limp like a marionette, frog clamped on his shoulders"),
+          "b": ("B  -  The Crown", "close bust, skull opened, the frog feeding"),
+          "c": ("C  -  The Hunched", "on his knuckles, a cord from its mouth into his crown")}
+
+
+def _font(size, bold=False):
+    from PIL import ImageFont
+    names = (["arialbd.ttf", "DejaVuSans-Bold.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"] if bold
+             else ["arial.ttf", "DejaVuSans.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"])
+    for n in names:
+        try:
+            return ImageFont.truetype(n, size)
+        except OSError:
+            pass
+    return ImageFont.load_default()
+
+
+def sheet(scenes, labels, path, sc_=3, crop=(56, 0, 264, 124)):
+    """Labelled side-by-side comparison at battle scale."""
+    from PIL import ImageDraw
+    pw, ph = (crop[2] - crop[0]) * sc_, (crop[3] - crop[1]) * sc_
+    gap, top = 24, 84
+    out = Image.new("RGBA", (pw * len(scenes) + gap * (len(scenes) + 1), ph + top + gap), (12, 9, 16, 255))
+    d = ImageDraw.Draw(out)
+    big, small = _font(30, True), _font(19)
+    for i, (scene, (title, sub)) in enumerate(zip(scenes, labels)):
+        x = gap + i * (pw + gap)
+        out.paste(scene.crop(crop).resize((pw, ph), Image.NEAREST), (x, top))
+        d.text((x, 14), title, font=big, fill=(232, 213, 90, 255))
+        d.text((x, 52), sub, font=small, fill=(170, 160, 190, 255))
+    out.save(path)
+
+
 if __name__ == "__main__":
-    out = sys.argv[1]
-    which = sys.argv[2:] or list(CONCEPTS)
-    bg = Image.open(os.path.join(out, "bg.png")).convert("RGBA")
+    # python tools/art/host_concepts.py OUTDIR [a b c] [--coil]
+    #   writes host_<k>.png (1x), host_<k>_x6.png (zoom) and host_sheet.png (labelled, battle scale)
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    coiled = "--coil" in sys.argv
+    out = args[0] if args else "art/concepts"
+    which = args[1:] or list(CONCEPTS)
+    os.makedirs(out, exist_ok=True)
+    bg = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "cave_bg.png")).convert("RGBA")
+    scenes = []
     for k in which:
-        for coiled in (False,):
-            R = CONCEPTS[k](coiled)
-            img = R.to_rgba()
-            tag = f"{k}{'_coil' if coiled else ''}"
-            sc.save(img, os.path.join(out, f"host_{tag}.png"))
-            sc.save(img, os.path.join(out, f"host_{tag}_x6.png"), 6)
-            scene = compose(img, bg).crop((60, 0, 260, 124))
-            scene.resize((scene.width * 4, scene.height * 4), Image.NEAREST).save(os.path.join(out, f"scene_{tag}.png"))
-            print("wrote", tag)
+        img = CONCEPTS[k](coiled).to_rgba()
+        tag = f"{k}{'_coil' if coiled else ''}"
+        sc.save(img, os.path.join(out, f"host_{tag}.png"))
+        sc.save(img, os.path.join(out, f"host_{tag}_x6.png"), 6)
+        scenes.append(compose(img, bg))
+        print("wrote", tag)
+    sheet(scenes, [LABELS[k] for k in which], os.path.join(out, "host_sheet.png"))
+    print("sheet:", os.path.join(out, "host_sheet.png"))
