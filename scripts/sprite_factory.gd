@@ -191,4 +191,220 @@ static func build_background() -> Image:
 			var ny := (y - 117) / 5.0
 			if nx * nx + ny * ny <= 1.0:
 				img.set_pixel(x, y, Color("#120c1a"))
+
+	# dithered vignette: the edges of the cave swallow the light
+	for y in 180:
+		for x in 320:
+			var nx := (x - 160.0) / 190.0
+			var ny := (y - 80.0) / 105.0
+			var v := nx * nx + ny * ny
+			if v > 0.5:
+				var t := clampf((v - 0.5) / 0.7, 0.0, 1.0)
+				if t > float(BAYER[y & 1][x & 1]) / 4.0:
+					img.set_pixel(x, y, img.get_pixel(x, y).darkened(0.55))
 	return img
+
+
+# ======================================================================================
+# The Host: a possessed man with the Sucker Frog on his shoulders. The frog's sucker is seated
+# in the open top of his skull and its cords run down into his brain and eyes.
+# ======================================================================================
+
+const HW := 52
+const HH := 58
+
+
+static func _line(img: Image, a: Vector2, b: Vector2, c: Color, w: int = 1) -> void:
+	var n := int(maxf(absf(b.x - a.x), absf(b.y - a.y)))
+	for i in n + 1:
+		var t := float(i) / float(maxi(n, 1))
+		var p := a.lerp(b, t)
+		for dx in w:
+			for dy in w:
+				_put(img, int(p.x) + dx, int(p.y) + dy, c)
+
+
+static func _outline(img: Image, col: Color) -> Image:
+	var out := Image.create_empty(img.get_width(), img.get_height(), false, Image.FORMAT_RGBA8)
+	out.copy_from(img)
+	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+	for y in img.get_height():
+		for x in img.get_width():
+			if _solid(img, x, y):
+				continue
+			for d in dirs:
+				if _solid(img, x + d.x, y + d.y):
+					out.set_pixel(x, y, col)
+					break
+	return out
+
+
+static func _cord(img: Image, pts: Array[Vector2], dark: Color, hi: Color, w: int) -> void:
+	for i in pts.size() - 1:
+		_line(img, pts[i], pts[i + 1], dark, w)
+	for i in pts.size():
+		if i % 2 == 1:
+			_put(img, int(pts[i].x), int(pts[i].y), hi)
+
+
+static func build_host(coiled: bool) -> Image:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 21
+	var img := Image.create_empty(HW, HH, false, Image.FORMAT_RGBA8)
+
+	var skin: Array[Color] = [Color("#2e2c34"), Color("#55535c"), Color("#86838a"), Color("#b9b2ae")]
+	var rags: Array[Color] = [Color("#150f1a"), Color("#261b2b"), Color("#3b2c40"), Color("#52405a")]
+	var pants: Array[Color] = [Color("#0e0b12"), Color("#181320"), Color("#241c2e"), Color("#31283d")]
+	var green: Array[Color] = [Color("#1c2e1e"), Color("#2c4d30"), Color("#4a7636"), Color("#82a243")]
+	var brain: Array[Color] = [Color("#4a1830"), Color("#7e2f50"), Color("#b04b73"), Color("#dc87a3")]
+	var lip: Array[Color] = [Color("#4a0e2a"), Color("#8f1d4a"), Color("#c23366"), Color("#ef6f90")]
+	var maw: Array[Color] = [Color("#1a0510"), Color("#2a0818"), Color("#3a0a1e"), Color("#4a0e2a")]
+	var hsclera: Array[Color] = [Color("#6b6258"), Color("#a89f8e"), Color("#d6cdb8"), Color("#f2ead4")]
+	var fsclera: Array[Color] = [Color("#b08a22"), Color("#d8b83a"), Color("#ecd85c"), Color("#fff3a0")]
+	if coiled:
+		fsclera = [Color("#8a1a1a"), Color("#c23030"), Color("#e85a5a"), Color("#ff9a9a")]
+	var tongue: Array[Color] = [Color("#5a1030"), Color("#a02550"), Color("#d04870"), Color("#f08aa8")]
+	var black: Array[Color] = [Color.BLACK, Color.BLACK, Color.BLACK, Color.BLACK]
+	var ivory := Color("#ece5c4")
+
+	# legs and feet
+	_ell(img, 20, 51, 7, 7, pants)
+	_ell(img, 32, 51, 7, 7, pants)
+	_ell(img, 17, 57, 6, 2, black)
+	_ell(img, 35, 57, 6, 2, black)
+
+	# ragged shirt, a torn patch showing skin
+	_ell(img, 26, 46, 17, 9, rags)
+	_ell(img, 34, 50, 5, 4, black)
+	for r in 3:
+		_line(img, Vector2(30, 48 + r * 2), Vector2(38, 48 + r * 2), skin[2], 1)
+	_line(img, Vector2(34, 47), Vector2(34, 53), skin[1], 1)
+	for p in [Vector2i(28, 46), Vector2i(29, 45), Vector2i(34, 47), Vector2i(35, 49), Vector2i(20, 49), Vector2i(19, 47)]:
+		_put(img, p.x, p.y, rags[0])
+
+	# arms: too long, hanging, fingers dragging
+	for side in [-1, 1]:
+		var sx: int = 26 + side * 19
+		var pts: Array[Vector2] = [Vector2(sx, 40), Vector2(sx + side * 2, 49), Vector2(sx + side, 54)]
+		for i in 2:
+			_line(img, pts[i], pts[i + 1], skin[1], 3)
+		for i in 2:
+			_line(img, pts[i] + Vector2(0, 0), pts[i + 1] + Vector2(0, 0), skin[2], 1)
+		_ell(img, sx + side, 55, 2, 2, skin)
+		for k in 3:
+			_put(img, sx + side - 1 + k, 57, skin[2])
+
+	# neck
+	_ell(img, 26, 41, 6, 4, skin)
+
+	# the frog's hind legs clamp over his shoulders, feet draped on his chest
+	_ell(img, 11, 37, 6, 5, green)
+	_ell(img, 41, 37, 6, 5, green)
+	_ell(img, 14, 44, 4, 3, green)
+	_ell(img, 38, 44, 4, 3, green)
+	for t in 3:
+		_put(img, 12 + t * 2, 47, green[3])
+		_put(img, 34 + t * 2, 47, green[3])
+
+	# the frog's body rides behind and above the head
+	_ell(img, 26, 8, 13, 7, green)
+	for n in 12:
+		var x := rng.randi_range(13, 39)
+		var y := rng.randi_range(1, 14)
+		if _solid(img, x, y):
+			_put(img, x, y, green[0])
+			_put(img, x - 1, y - 1, green[3])
+	_eye(img, 15, 4, fsclera, green, coiled)
+	_eye(img, 37, 4, fsclera, green, coiled)
+	# its grin, wide and wrong
+	for x in range(15, 38):
+		var gy := 10 + roundi(2.0 * (1.0 - pow((x - 26) / 11.0, 2.0)))
+		_put(img, x, gy, Color("#14080c"))
+		if x % 2 == 1:
+			_put(img, x, gy + 1, ivory)
+
+	# the man's head
+	_ell(img, 26, 29, 11, 12, skin)
+	# stringy hair and ears
+	for hx in [15, 16, 36, 37]:
+		_line(img, Vector2(hx, 21), Vector2(hx - 1 + (hx % 2) * 2, 38), Color("#1a1418"), 1)
+	_put(img, 14, 30, skin[1])
+	_put(img, 14, 31, skin[1])
+	_put(img, 38, 30, skin[1])
+	_put(img, 38, 31, skin[1])
+
+	# the frog's front limbs curve down and dig into his skull
+	for side in [-1, 1]:
+		var lp: Array[Vector2] = [Vector2(26 + side * 12, 9), Vector2(26 + side * 16, 17), Vector2(26 + side * 11, 26)]
+		for i in 2:
+			_line(img, lp[i], lp[i + 1], green[1], 3)
+		for i in 2:
+			_line(img, lp[i] + Vector2(-side, 0), lp[i + 1] + Vector2(-side, 0), green[3], 1)
+		for k in 3:
+			_put(img, int(lp[2].x) - side * k, int(lp[2].y) + 2 + (k % 2), green[3])
+
+	# eyes: rolled back, mismatched
+	_ell(img, 21, 29, 4, 4, black)
+	_ell(img, 21, 29, 3, 3, hsclera)
+	_ell(img, 31, 29, 4, 4, black)
+	_ell(img, 31, 29, 3, 3, hsclera)
+	if coiled:
+		for p in [Vector2i(19, 29), Vector2i(23, 28), Vector2i(21, 31), Vector2i(30, 28), Vector2i(33, 30), Vector2i(31, 31)]:
+			_put(img, p.x, p.y, Color("#a01818"))
+	else:
+		# vacant, not looking at the same thing
+		for p in [Vector2i(20, 30), Vector2i(21, 30), Vector2i(20, 31), Vector2i(32, 29), Vector2i(33, 29), Vector2i(33, 28)]:
+			_put(img, p.x, p.y, Color.BLACK)
+	# nose
+	for p in [Vector2i(26, 31), Vector2i(26, 32), Vector2i(25, 33), Vector2i(27, 33)]:
+		_put(img, p.x, p.y, skin[0])
+
+	# mouth hanging open
+	if coiled:
+		_ell(img, 26, 39, 6, 6, black)
+		for x in range(21, 32, 2):
+			_put(img, x, 34, ivory)
+		for x in [23, 26, 29]:
+			_put(img, x, 43, ivory)
+		_ell(img, 26, 48, 3, 7, tongue)
+		_put(img, 26, 54, tongue[3])
+	else:
+		_ell(img, 26, 38, 5, 3, black)
+		for x in range(22, 31, 2):
+			_put(img, x, 36, ivory)
+		for x in [23, 26, 29]:
+			_put(img, x, 40, ivory)
+	var drool_len := 9 if coiled else 6
+	for k in drool_len:
+		_put(img, 31, 41 + k, Color("#8fd6e8"))
+
+	# the crown of his skull is open: brain, with the sucker seated in it
+	_ell(img, 26, 21, 12, 6, brain)
+	for n in 6:
+		var x := rng.randi_range(17, 35)
+		var y := rng.randi_range(17, 24)
+		_line(img, Vector2(x, y), Vector2(x + 3, y + rng.randi_range(-1, 1)), brain[0], 1)
+	var sr := 11 if coiled else 9
+	var sry := 6 if coiled else 5
+	_ell(img, 26, 20, sr, sry, lip)
+	_ell(img, 26, 20, sr - 3, sry - 2, maw)
+	_ell(img, 26, 20, 2, 1, black)
+	var tn := 18 if coiled else 12
+	for a in tn:
+		var t := float(a) / float(tn) * TAU
+		_put(img, roundi(26.0 + cos(t) * (sr - 3.5)), roundi(20.0 + sin(t) * (sry - 2.5)), ivory)
+
+	# cords from the sucker down into his brain: eyes, forehead
+	var cdark := Color("#4a0820") if coiled else Color("#2a0818")
+	var chi := Color("#ff6a8a") if coiled else Color("#e04870")
+	var w := 2 if coiled else 1
+	var c1: Array[Vector2] = [Vector2(20, 24), Vector2(18, 26), Vector2(18, 29)]
+	var c2: Array[Vector2] = [Vector2(32, 24), Vector2(34, 26), Vector2(34, 29)]
+	var c3: Array[Vector2] = [Vector2(26, 25), Vector2(26, 27)]
+	_cord(img, c1, cdark, chi, w)
+	_cord(img, c2, cdark, chi, w)
+	_cord(img, c3, cdark, chi, w)
+	for p in [Vector2i(23, 25), Vector2i(23, 27), Vector2i(29, 25), Vector2i(29, 28), Vector2i(22, 25), Vector2i(30, 26)]:
+		_put(img, p.x, p.y, Color("#5a3550"))
+
+	return _outline(img, Color("#0d0a10"))

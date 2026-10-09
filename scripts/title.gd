@@ -39,10 +39,10 @@ func _build_scene() -> void:
 	add_child(bg)
 
 	var frog := Sprite2D.new()
-	frog.texture = ImageTexture.create_from_image(Sprites.build_frog(false))
+	frog.texture = ImageTexture.create_from_image(Sprites.build_host(false))
 	frog.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	frog.scale = Vector2(2, 2)
-	frog.position = Vector2(160, 64)
+	frog.position = Vector2(160, 63)
 	add_child(frog)
 
 	var title := _label(Vector2(8, 6), Vector2(100, 40), 14, Color("#e8d55a"))

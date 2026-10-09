@@ -2,3 +2,5 @@
 build/
 export_credentials.cfg
 *.import
+__pycache__/
+*.pyc

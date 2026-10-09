@@ -1,12 +1,12 @@
 extends Node2D
-## Tutorial battle: Wanderer vs Sucker Frog.
+## Tutorial battle: Wanderer vs the Host (a possessed man with the Sucker Frog on his shoulders).
 ## Classic turn-based combat, written as plain GDScript coroutines (no battle framework).
 ## Flow: _run_game -> _battle -> (command phase -> hero acts -> enemy acts -> end of turn)*
 
 const Data := preload("res://scripts/data.gd")
 const Sprites := preload("res://scripts/sprite_factory.gd")
 
-const ENEMY_REST_Y := 64.0
+const ENEMY_REST_Y := 63.0
 const BAR_W := 44.0
 const PLAYER_POPUP := Vector2(272, 118)
 const ENEMY_POPUP := Vector2(160, 50)
@@ -94,7 +94,8 @@ func _battle() -> void:
 	_reset_battle("sucker_frog")
 	_log_lines.clear()
 	_refresh_log()
-	await say("A Sucker Frog drops from the ceiling!")
+	await say("A man staggers out of the dark.")
+	await say("Something wet rides his shoulders.")
 	_popup("...", PLAYER_POPUP, Color("#b8b0e0"), 10)
 	await say("%s says nothing. He nods, once." % hn)
 
@@ -171,9 +172,9 @@ func _hero_act(a: Dictionary) -> void:
 			_hit_enemy()
 			_popup(str(d), ENEMY_POPUP, Color("#ffe14a") if crit else Color.WHITE, 14 if crit else 12)
 			if crit:
-				await say("A clean hit! The Sucker Frog takes %d." % d)
+				await say("A clean hit! The Host takes %d." % d)
 			else:
-				await say("%s strikes! The Sucker Frog takes %d." % [hn, d])
+				await say("%s strikes! The Host takes %d." % [hn, d])
 		"guard":
 			guarding = true
 			sfx("guard")
@@ -203,7 +204,7 @@ func _enemy_act() -> void:
 	if e_stunned:
 		e_stunned = false
 		e_idx = 0
-		await say("The Sucker Frog is still reeling.")
+		await say("The Host is still reeling.")
 		return
 	var pattern: Array = e_data["pattern"]
 	var skill: String = pattern[e_idx % pattern.size()]
@@ -215,7 +216,7 @@ func _enemy_act() -> void:
 
 
 func _skill_lash() -> void:
-	await say("The Sucker Frog lashes out with its tongue!")
+	await say("A tongue lashes out of the Host's mouth!")
 	var d := randi_range(5, 8)
 	if guarding:
 		d = ceili(d / 2.0)
@@ -224,13 +225,13 @@ func _skill_lash() -> void:
 
 
 func _skill_coil() -> void:
-	await say("The Sucker Frog coils back.", 0.35)
+	await say("The Host's head tips back, jaw unhinged.", 0.35)
 	enemy_sprite.texture = tex_coiled
 	enemy_mat.set_shader_parameter("flash_color", Color("#ffb0c8"))
 	enemy_mat.set_shader_parameter("flash", 0.8)
 	create_tween().tween_property(enemy_mat, "shader_parameter/flash", 0.0, 0.25)
 	sfx("coil")
-	await say("Its sucker flexes, hungry.")
+	await say("The sucker flexes on its brain, hungry.")
 
 
 func _skill_latch() -> void:
@@ -240,7 +241,7 @@ func _skill_latch() -> void:
 		_shake_enemy()
 		await say("It slaps his raised arms and slips off!")
 		e_stunned = true
-		await say("The Sucker Frog reels, stunned.")
+		await say("The Host reels, stunned.")
 	else:
 		var lost := _hurt_hero(randi_range(4, 6))
 		drained = mini(3, drained + 1)
@@ -286,7 +287,8 @@ func _victory() -> void:
 	tw.tween_property(enemy_sprite, "position:y", ENEMY_REST_Y + 8.0, 1.1)
 	await tw.finished
 	enemy_sprite.hide()
-	await say("The Sucker Frog collapses into goo.")
+	await say("The frog peels away, spent. The man falls.")
+	await say("He was already gone.")
 	await say("Victory.")
 
 
@@ -472,8 +474,8 @@ func _build_world() -> void:
 	bg.centered = false
 	add_child(bg)
 
-	tex_frog = ImageTexture.create_from_image(Sprites.build_frog(false))
-	tex_coiled = ImageTexture.create_from_image(Sprites.build_frog(true))
+	tex_frog = ImageTexture.create_from_image(Sprites.build_host(false))
+	tex_coiled = ImageTexture.create_from_image(Sprites.build_host(true))
 	var sh := Shader.new()
 	sh.code = SHADER
 	enemy_mat = ShaderMaterial.new()

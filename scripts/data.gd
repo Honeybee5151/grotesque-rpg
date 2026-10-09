@@ -15,7 +15,7 @@ const ITEMS := {
 
 const ENEMIES := {
 	"sucker_frog": {
-		"name": "Sucker Frog",
+		"name": "The Host",
 		"max_hp": 80,
 		"def": 0,
 		"agi": 6,
