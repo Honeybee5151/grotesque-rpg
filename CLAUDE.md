@@ -22,6 +22,10 @@ world of wonderfully grotesque monsters. **Miles** is the director: big creative
   sprite up in-engine (mixed pixel sizes look cheap). Battlers are at most 104x118.
 - Run the relevant checks before saying something works, and look at rendered art before showing it.
 - Small, coherent commits with clear messages. Push your own branch as a backup.
+- Team sessions run in **auto mode**: no permission prompts, and Claude Code's safety classifier blocks
+  risky actions. If something is blocked, don't look for a way around it - say what you were trying
+  to do and ask Miles. monster/world/fights are hard-blocked from pushing `main` and editing
+  `VERSION` or CI (`team/settings/creative.json`); that work goes through `@misc`.
 
 ## Running things (Windows, from your checkout)
 - `godot` is on PATH in team terminals (a shim for the Godot 4.4.1 console exe in `$env:GODOT`).

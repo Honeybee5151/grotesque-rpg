@@ -47,22 +47,6 @@
       "PowerShell(python3 tools/art/*)",
       "PowerShell(Start-Process *.png)"
     ],
-    "ask": [
-      "Bash(git push origin main *)",
-      "Bash(git push -u origin main *)",
-      "Bash(git reset --hard *)",
-      "Bash(git clean *)",
-      "Bash(git branch -D *)",
-      "Bash(git worktree remove *)",
-      "PowerShell(git push origin main *)",
-      "PowerShell(git push -u origin main *)",
-      "PowerShell(git reset --hard *)",
-      "PowerShell(git clean *)",
-      "PowerShell(git branch -D *)",
-      "PowerShell(git worktree remove *)",
-      "Edit(/VERSION)",
-      "Edit(/.github/**)"
-    ],
     "deny": [
       "Bash(git push *--force*)",
       "Bash(git push * -f *)",
