@@ -15,6 +15,11 @@
   packages the art tools use, signs you in to Claude, creates the worktrees, then opens the windows.
   The sessions can message each other by name (@monster, @world, @fights, @misc).
 
+  Permissions: sessions start in auto mode - no permission prompts; Claude Code's safety
+  classifier approves routine work and blocks risky actions (force-push, wiping files, piping
+  downloads into a shell...). monster, world and fights are also hard-blocked from pushing main and
+  from editing VERSION or CI. -Bypass turns every check off (bypassPermissions mode).
+
 .EXAMPLE
   .\Start-Team.ps1                       # four PowerShell windows, fresh conversations
 .EXAMPLE
@@ -23,13 +28,19 @@
   .\Start-Team.ps1 -Layout Grid          # one Windows Terminal window split 2x2
 .EXAMPLE
   .\Start-Team.ps1 -Only monster,fights  # just part of the team
+.EXAMPLE
+  .\Start-Team.ps1 -Bypass              # no safety checks at all (bypassPermissions)
+.EXAMPLE
+  .\Start-Team.ps1 -DryRun              # prepare everything, print the commands, open nothing
 #>
 [CmdletBinding()]
 param(
     [ValidateSet('Windows', 'Grid', 'Tabs')] [string]$Layout = 'Windows',
     [switch]$Continue,
-    [ValidateSet('monster', 'world', 'fights', 'misc')] [string[]]$Only,
-    [ValidateSet('default', 'acceptEdits', 'auto', 'plan')] [string]$PermissionMode = 'acceptEdits',
+    [string[]]$Only,
+    [ValidateSet('auto', 'acceptEdits', 'default', 'manual', 'plan', 'dontAsk', 'bypassPermissions')] [string]$PermissionMode = 'auto',
+    [switch]$Bypass,
+    [switch]$DryRun,
     [string]$Model = 'claude-opus-5-5',
     [string]$Effort = 'max',
     [switch]$SkipChecks
@@ -43,6 +54,8 @@ $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $TeamHome = Split-Path -Parent $Repo
 $ToolsDir = Join-Path $TeamHome '.tools'
 $GodotExe = $null
+$ScriptArgs = @{}
+foreach ($key in $PSBoundParameters.Keys) { $ScriptArgs[$key] = $PSBoundParameters[$key] }
 
 $Kickoff = @{
     monster = 'New shift. Read CLAUDE.md and docs/art.md, check the git log and merge main if it moved. Then do the first-shift task in your role file: get the Host concepts in front of Miles and ask which one he wants.'
@@ -209,6 +222,63 @@ function Ensure-GitIdentity {
 }
 
 # ------------------------------------------------------------------------------------------------
+# self-update
+# ------------------------------------------------------------------------------------------------
+
+# "-Only monster,fights" arrives as one string through powershell -File; accept both forms.
+function Resolve-Only([string[]]$Names) {
+    $out = @()
+    foreach ($n in $Names) {
+        foreach ($part in ($n -split '[,\s]+')) {
+            if (-not $part) { continue }
+            if ($Roles -notcontains $part) { throw "Unknown role '$part'. Roles: $($Roles -join ', ')" }
+            $out += $part
+        }
+    }
+    return $out
+}
+
+function Get-ForwardArgs {
+    $list = @()
+    foreach ($key in $ScriptArgs.Keys) {
+        $value = $ScriptArgs[$key]
+        if ($value -is [System.Management.Automation.SwitchParameter]) {
+            if ($value.IsPresent) { $list += "-$key" }
+        } elseif ($value -is [array]) {
+            $list += "-$key"
+            $list += ($value -join ',')
+        } else {
+            $list += "-$key"
+            $list += "$value"
+        }
+    }
+    return $list
+}
+
+# Bring the main checkout up to date; if that changed this launcher, run the new one instead.
+function Update-Main {
+    if ((Invoke-Native 'git' @('-C', $Repo, 'fetch', 'origin', '--prune')).Code -ne 0) {
+        Say 'Could not reach GitHub; using what is already on this machine.' DarkGray
+        return
+    }
+    $branch = (Invoke-Git @('rev-parse', '--abbrev-ref', 'HEAD')) -join ''
+    $dirty = (Invoke-Git @('status', '--porcelain', '--untracked-files=no')) -join ''
+    if ($branch -ne 'main' -or $dirty -or -not (Test-Ref 'refs/remotes/origin/main')) { return }
+    $before = (Get-FileHash -LiteralPath $PSCommandPath).Hash
+    if ((Invoke-Native 'git' @('-C', $Repo, 'merge', '--ff-only', 'origin/main')).Code -ne 0) {
+        Say 'main has commits that are not on GitHub yet; leaving it as it is.' DarkGray
+        return
+    }
+    if ((Get-FileHash -LiteralPath $PSCommandPath).Hash -ne $before -and -not $env:GROTESQUE_LAUNCHER_REEXEC) {
+        Say 'The launcher was updated; restarting it.' DarkGray
+        $env:GROTESQUE_LAUNCHER_REEXEC = '1'
+        $hostExe = (Get-Process -Id $PID).Path
+        & $hostExe -NoProfile -ExecutionPolicy Bypass -File $PSCommandPath @(Get-ForwardArgs)
+        exit $LASTEXITCODE
+    }
+}
+
+# ------------------------------------------------------------------------------------------------
 # checkouts
 # ------------------------------------------------------------------------------------------------
 
@@ -222,16 +292,6 @@ function Test-Ref([string]$Ref) {
 }
 
 function Ensure-Worktrees([string[]]$Wanted) {
-    if ((Invoke-Native 'git' @('-C', $Repo, 'fetch', 'origin', '--prune')).Code -ne 0) {
-        Say 'Could not reach GitHub; using what is already on this machine.' DarkGray
-    }
-    $branch = (Invoke-Git @('rev-parse', '--abbrev-ref', 'HEAD')) -join ''
-    $dirty = (Invoke-Git @('status', '--porcelain')) -join ''
-    if ($branch -eq 'main' -and -not $dirty -and (Test-Ref 'refs/remotes/origin/main')) {
-        if ((Invoke-Native 'git' @('-C', $Repo, 'merge', '--ff-only', 'origin/main')).Code -ne 0) {
-            Say 'main has commits that are not on GitHub yet; leaving it as it is.' DarkGray
-        }
-    }
     foreach ($role in $Wanted) {
         if ($role -eq 'misc') { continue }
         $dir = Get-RoleDir $role
@@ -251,6 +311,38 @@ function Ensure-Worktrees([string[]]$Wanted) {
     }
 }
 
+# Every checkout carries its own .claude/settings.json (it is in the repo), and Claude Code merges
+# permission lists across files, so an outdated copy keeps outdated rules. Bring each checkout's copy
+# in line with main's, unless that checkout has its own uncommitted edits to the file.
+function Sync-TeamSettings([string[]]$Wanted) {
+    $ref = 'origin/main'
+    if (-not (Test-Ref 'refs/remotes/origin/main')) { $ref = 'main' }
+    $r = Invoke-Native 'git' @('-C', $Repo, 'show', "${ref}:.claude/settings.json")
+    if ($r.Code -ne 0) { return }
+    $want = (($r.Output -join "`n").TrimEnd()) + "`n"
+    foreach ($role in $Wanted) {
+        $dir = Get-RoleDir $role
+        if (-not (Test-Path (Join-Path $dir '.git'))) { continue }
+        $file = Join-Path (Join-Path $dir '.claude') 'settings.json'
+        $have = ''
+        if (Test-Path $file) { $have = ([IO.File]::ReadAllText($file)) -replace "`r`n", "`n" }
+        if ($have.TrimEnd() -eq $want.TrimEnd()) { continue }
+        $local = Invoke-Native 'git' @('-C', $dir, 'status', '--porcelain', '--', '.claude/settings.json')
+        if (($local.Output -join '').Trim()) {
+            Say ("  {0}: has its own edits to .claude/settings.json; leaving them" -f $role) DarkGray
+            continue
+        }
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $file) | Out-Null
+        [IO.File]::WriteAllText($file, $want)
+        $c = Invoke-Native 'git' @('-C', $dir, 'commit', '-q', '-m', 'Sync team permissions from main', '--', '.claude/settings.json')
+        if ($c.Code -eq 0) {
+            Say ("  {0}: permission rules synced from main" -f $role) DarkGray
+        } else {
+            Say ("  {0}: permission rules updated (commit them when convenient)" -f $role) DarkGray
+        }
+    }
+}
+
 # ------------------------------------------------------------------------------------------------
 # launching
 # ------------------------------------------------------------------------------------------------
@@ -266,6 +358,10 @@ function Get-RoleCommand([string]$Role) {
     )
     if ($GodotExe) { $lines += "`$env:GODOT = $(Quote $GodotExe)" }
     $base = "claude --model $Model --effort $Effort --name $Role --permission-mode $PermissionMode --append-system-prompt-file $(Quote $roleFile)"
+    if ($Role -ne 'misc') {
+        # monster/world/fights: hard-blocked from pushing main and editing VERSION or CI
+        $base += " --settings $(Quote (Join-Path $Repo 'team\settings\creative.json'))"
+    }
     $fresh = "$base $(Quote $Kickoff[$Role])"
     if ($Continue) {
         # fall back to a fresh session only if there was nothing to continue (it exits right away)
@@ -319,10 +415,17 @@ function Main {
     } catch { }
 
     $wanted = $Roles
-    if ($Only) { $wanted = @($Roles | Where-Object { $Only -contains $_ }) }
+    if ($Only) {
+        $picked = Resolve-Only $Only
+        $wanted = @($Roles | Where-Object { $picked -contains $_ })
+    }
+    if ($Bypass) { $script:PermissionMode = 'bypassPermissions' }
 
     Say 'Grotesque RPG: starting the team' Magenta
     Say "Repository: $Repo" DarkGray
+
+    Step 'Updating'
+    if (Has 'git') { Update-Main }
 
     if ($SkipChecks) {
         Update-SessionPath
@@ -338,6 +441,7 @@ function Main {
 
     Step 'Preparing checkouts'
     Ensure-Worktrees $wanted
+    Sync-TeamSettings $wanted
     $starter = Join-Path $TeamHome 'Start-Team.cmd'
     if (-not (Test-Path $starter)) {
         $leaf = Split-Path -Leaf $Repo
@@ -346,13 +450,22 @@ function Main {
         Say "  next time, double-click $starter" DarkGray
     }
 
-    Step "Opening $($wanted.Count) sessions ($Model, effort $Effort)"
+    Step "Opening $($wanted.Count) sessions ($Model, effort $Effort, permissions: $PermissionMode)"
+    if ($PermissionMode -eq 'bypassPermissions') {
+        Say 'Bypass mode: no permission checks and no safety classifier. The first window asks you to accept that once.' Yellow
+    }
     $mode = $Layout
     if ($mode -ne 'Windows' -and -not (Has 'wt')) {
         Say 'Windows Terminal (wt) not found: opening separate PowerShell windows instead.' DarkGray
         $mode = 'Windows'
     }
-    if ($mode -eq 'Windows') {
+    if ($DryRun) {
+        foreach ($role in $wanted) {
+            Say "--- $role" Cyan
+            Say (Get-RoleCommand $role) DarkGray
+        }
+        return
+    } elseif ($mode -eq 'Windows') {
         Open-Windows $wanted
     } else {
         Start-Process -FilePath 'wt.exe' -ArgumentList (Get-TerminalArgs $wanted $mode)
