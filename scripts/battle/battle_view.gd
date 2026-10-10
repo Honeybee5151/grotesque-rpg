@@ -10,7 +10,7 @@ const Battler := preload("res://scripts/battle/battler.gd")
 
 const HOLD := 0.65          # seconds a finished line stays before the next one
 const GROUND_Y := 122.0     # enemies stand on this line, bottom-centred (docs/art.md)
-const SLOT_W := 104.0       # one battler canvas wide: enemies stand this far apart
+const GAP := 4.0            # between enemy canvases; a formation is centred on x=160
 const BAR_W := 44.0
 const PLAYER_POPUP := Vector2(272, 118)
 const ENEMY_POPUP_Y := 50.0
@@ -66,8 +66,17 @@ func build(bg: String, hero: Battler, enemies: Array) -> void:
 	_build_backdrop(bg)
 	_shader = Shader.new()
 	_shader.code = SHADER
+	# Canvases side by side, GAP apart, the whole formation centred.
+	var poses: Array = []
+	var total := GAP * (enemies.size() - 1)
+	for e in enemies:
+		poses.append(_load_poses(e))
+		total += poses.back()["normal"].get_width()
+	var left := floorf(160.0 - total / 2.0)
 	for i in enemies.size():
-		_add_enemy(enemies[i], 160.0 + (i - (enemies.size() - 1) / 2.0) * SLOT_W)
+		var w: float = poses[i]["normal"].get_width()
+		_add_enemy(enemies[i], poses[i], floorf(left + w / 2.0))
+		left += w + GAP
 	_build_ui(hero)
 
 
@@ -144,7 +153,7 @@ func popup_enemy(b: Battler, text: String, col: Color, font_size: int = 10) -> v
 	_popup(text, _enemy_popup_pos(b), col, font_size)
 
 
-func _add_enemy(b: Battler, x: float) -> void:
+func _load_poses(b: Battler) -> Dictionary:
 	var art: String = b.data.get("sprite", b.id)
 	var poses := {}
 	for pose in POSES:
@@ -156,6 +165,10 @@ func _add_enemy(b: Battler, x: float) -> void:
 		var img := Image.create_empty(24, 24, false, Image.FORMAT_RGBA8)
 		img.fill(Color("#ff00ff"))
 		poses["normal"] = ImageTexture.create_from_image(img)
+	return poses
+
+
+func _add_enemy(b: Battler, poses: Dictionary, x: float) -> void:
 	var mat := ShaderMaterial.new()
 	mat.shader = _shader
 	mat.set_shader_parameter("flash", 0.0)  # set up front: tweens need them to exist

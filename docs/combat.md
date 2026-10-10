@@ -104,8 +104,10 @@ battle.queue_free()
 ## Enemy art
 `art/monsters/<sprite>/normal.png` and `telegraph.png`, plus optional `stunned.png` and `hurt.png`.
 All are at 1x on one canvas of up to 104×118, standing on its bottom row, and drawn with the
-bottom-centre at (160,122). Several enemies stand 104px apart, centred on x=160. A missing pose
-falls back to `normal`. Missing art shows as a magenta square. Hurt flashes for 0.3s on a hit.
+bottom-centre on the ground line y=122. A formation stands canvas by canvas, 4px apart, centred as a
+group on x=160; it has to fit in 320px. Monster's budgets: solo 104 wide, pairs 96, trios 80 (also
+in `docs/art.md`). A missing pose falls back to `normal`. Missing art shows as a magenta square.
+Hurt flashes for 0.3s on a hit.
 
 ## Battle text
 Every line lives in `data.gd` and fits the log window: 44 characters, checked in `say()`.
