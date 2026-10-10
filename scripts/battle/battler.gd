@@ -14,6 +14,7 @@ var mp: int
 var atk: int
 var def: int
 var agi: int
+var skills: Array = []       # skill ids the hero can choose from (enemies use their pattern)
 var states: Dictionary = {}  # state id -> stacks
 var guarding := false        # until the start of the next round
 var telegraphing := false    # its last move was a warning; the big one comes next
@@ -22,7 +23,7 @@ var ai_step := 0             # where an enemy is in its pattern (scripts/battle/
 var gone := false            # died and has been cleared away
 
 
-# carry: {hp, mp, states} brought in from outside the battle; missing keys mean fresh.
+# carry: {hp, mp, states, skills} brought in from outside the battle; missing keys mean fresh.
 func setup_hero(carry: Dictionary = {}) -> RefCounted:
 	var h: Dictionary = Data.HERO
 	id = "hero"
@@ -36,6 +37,7 @@ func setup_hero(carry: Dictionary = {}) -> RefCounted:
 	def = h.get("def", 0)
 	agi = h["agi"]
 	states = Dictionary(carry.get("states", {})).duplicate()
+	skills = Array(carry.get("skills", h.get("skills", []))).duplicate()
 	return self
 
 
