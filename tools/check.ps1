@@ -6,6 +6,7 @@
     boot              boot -> title screen, headless, for a moment
     autoplay smart    tools/smoke_test.gd -- smart
     autoplay attack   tools/smoke_test.gd -- attack
+    autoplay smart troop=host,host   two enemies: the target menu and multi-enemy battles
     updater           tools/update_test.sh through Git Bash (only with -Updater)
 
 .DESCRIPTION
@@ -24,7 +25,8 @@ param([switch]$Updater)
 
 $Root = Split-Path -Parent $PSScriptRoot
 $Godot = if ($env:GODOT) { $env:GODOT } else { 'godot' }
-$Policies = @('smart', 'attack')
+# One autoplay per entry: the smoke_test.gd arguments (fights owns the autoplay; they say what to run).
+$Policies = @('smart', 'attack', 'smart troop=host,host')
 
 $ErrorPattern = '^\s*(SCRIPT ERROR|USER ERROR|ERROR):|Parse Error'
 $WarningPattern = '^\s*(USER WARNING|WARNING):'
@@ -98,7 +100,7 @@ function Report([string]$Name, $Run, [string]$Need = '', [string]$Show = '') {
     $warnings = @(Get-Matches $all $WarningPattern)
     if (($problems | Where-Object { $_ -match 'Parse Error' })) { $script:Stop = "parse errors in $Name" }
 
-    $label = ("{0,-17} {1,3}s" -f $Name, $Run.Seconds)
+    $label = ("{0,-30} {1,3}s" -f $Name, $Run.Seconds)
     $extra = ''
     if ($Show) { $extra = $Run.Out | Where-Object { $_ -match $Show } | Select-Object -Last 1 }
     if ($problems.Count -eq 0) {
@@ -115,7 +117,7 @@ function Report([string]$Name, $Run, [string]$Need = '', [string]$Show = '') {
 }
 
 function Skip([string]$Name) {
-    Say ("  -       {0,-17}       skipped: {1}" -f $Name, $Stop) DarkGray
+    Say ("  -       {0,-30}       skipped: {1}" -f $Name, $Stop) DarkGray
     $script:Failed.Add($Name)
 }
 
@@ -139,17 +141,17 @@ if ($Stop) { Skip 'boot' } else {
 }
 foreach ($p in $Policies) {
     if ($Stop) { Skip "autoplay $p"; continue }
-    $run = Invoke-Native $Godot @('--headless', '--path', $Root, '--script', 'res://tools/smoke_test.gd', '--', $p) 120
+    $run = Invoke-Native $Godot (@('--headless', '--path', $Root, '--script', 'res://tools/smoke_test.gd', '--') + ($p -split ' ')) 120
     Report "autoplay $p" $run '^=== RESULT:' '^=== RESULT:'
 }
 if (-not $Updater) {
-    Say '  -       updater                 (add -Updater when anything near the updater changed)' DarkGray
+    Say ('  -       {0,-30}       (add -Updater when anything near the updater changed)' -f 'updater') DarkGray
 } elseif ($Stop) {
     Skip 'updater'
 } else {
     $bash = Find-Bash
     if (-not $bash) {
-        Say '  FAILED  updater                 Git Bash not found (install Git for Windows)' Red
+        Say ('  FAILED  {0,-30}       Git Bash not found (install Git for Windows)' -f 'updater') Red
         $Failed.Add('updater')
     } else {
         $script = (Join-Path $Root 'tools/update_test.sh') -replace '\\', '/'
