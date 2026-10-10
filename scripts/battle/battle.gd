@@ -7,7 +7,8 @@ extends CanvasLayer
 ## context, all optional: intro (lines replacing the first enemy's own), bg ("cave"),
 ##   can_run (false), mercy (default: on if an enemy's data asks for it),
 ##   hero {hp, mp, items, states, skills} carried in from outside (default: fresh).
-## result: {outcome: "won" | "lost" | "fled", hero: {hp, mp, items, states}, turns}.
+## result: {outcome: "won" | "lost" | "fled", hero: {hp, mp, items, states}, turns, flags}.
+##   flags: story flags the fight raised, e.g. {"freed": true} when the Host dies stunned.
 ## The battle draws on its own layer over whatever is underneath and keeps running while that
 ## is paused or disabled. The rules are in docs/combat.md; numbers and lines in scripts/data.gd.
 ## Flow: run -> intro -> (_round: command phase, enemies decide, everyone acts by speed,
@@ -25,6 +26,7 @@ var mercy := false            # the hero can't drop below 1 HP
 var can_run := false
 var turn := 0
 var outcome := ""             # "won", "lost" or "fled" once it's over
+var flags: Dictionary = {}    # story flags raised in the fight (an enemy's "death_when")
 var view: BattleView
 
 
@@ -64,6 +66,7 @@ func run(enemy_ids: Array, context: Dictionary = {}) -> Dictionary:
 		"outcome": outcome,
 		"hero": {"hp": hero.hp, "mp": hero.mp, "items": items.duplicate(), "states": keep},
 		"turns": turn,
+		"flags": flags.duplicate(),
 	}
 
 
@@ -218,8 +221,15 @@ func _settle() -> void:
 	for e in enemies:
 		if not e.alive() and not e.gone:
 			e.gone = true
+			var lines: Array = e.data.get("death", [])
+			var when: Dictionary = e.data.get("death_when", {})
+			for s in when:
+				if e.stacks(s) > 0:
+					lines = when[s]["lines"]
+					flags[when[s]["flag"]] = true
+					break
 			await view.kill_enemy(e)
-			for line in e.data.get("death", []):
+			for line in lines:
 				await _say(line, {"user": e})
 			e.states.clear()
 	if enemies.all(func(e: Battler) -> bool: return not e.alive()):
@@ -296,7 +306,7 @@ func _strike(user: Battler, target: Battler, sk: Dictionary, vars: Dictionary) -
 	var r: Dictionary = Data.RULES
 	var d: int
 	if sk.has("power"):
-		var v: float = r["variance"]
+		var v: float = sk.get("variance", r["variance"])
 		d = roundi(float(user.atk) * user.atk_mult() * float(sk["power"]) * randf_range(1.0 - v, 1.0 + v))
 	else:
 		d = randi_range(sk["dmg"][0], sk["dmg"][1])

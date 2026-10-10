@@ -28,8 +28,8 @@ prove it with `tools/smoke_test.gd`.
 The battle ends when every enemy has fallen (won), the hero falls (lost), or he runs (fled).
 
 ## Damage
-- **Attack-based skills** (`power`): ATK × state modifiers × power × a roll of 0.85-1.15, rounded,
-  minus the target's DEF.
+- **Attack-based skills** (`power`): ATK × state modifiers × power × a roll of 0.85-1.15 (a skill
+  can set its own `variance`; Crush has none), rounded, minus the target's DEF.
 - **Flat skills** (`dmg: [min, max]`): a roll in that range, minus DEF.
 - **Crit** (skills marked `crit`): 10% chance, ×1.5.
 - **Stunned target:** ×2 after the crit, and the stun's line replaces the skill's own in the log.
@@ -65,40 +65,50 @@ the man's eyes clear."
 
 | skill | MP | effect | gesture |
 |---|---|---|---|
-| **Crush** | 4 | ×2 damage, no crit roll. On a stunned enemy that's ×4: the punish for a read telegraph. | "Wanderer throws his whole weight into it!" |
+| **Crush** | 4 | ×2 damage. A sure blow: no damage roll and no crit. On a stunned enemy that's ×4: the punish for a read telegraph. | "Wanderer throws his whole weight into it!" |
 | **Mend** | 3 | heals 16 HP | "Wanderer presses a hand to his wounds." |
 
 - Ten MP is two Crushes, or a Crush and two Mends. Drained takes 1 MP per stack every round, so a
   missed telegraph costs skills as well as HP.
-- A caller can hand the hero a different skill list (`context.hero.skills`), e.g. while he's still
-  learning them.
+- A caller can hand the hero a different skill list (`context.hero.skills`). The prologue (and the
+  standalone tutorial) give him only Crush; Mend comes later in the story.
 - **Salve** (2 per fight in the tutorial): heals 15 HP and cures Drained. It can only be used when
   it would help.
 
 ## Enemies
 ### The Host (`host`): the tutorial
 A possessed man with the Sucker Frog on his back, its cord sunk into his skull (art and lore:
-`docs/bestiary.md`). HP 80, DEF 0, AGI 6. Mercy is on.
+`docs/bestiary.md`). In world's prologue, he's Odo. HP 58, DEF 0, AGI 6. Mercy is on.
 
 Pattern, repeating: **Lash** (5-8) → **Coil** (telegraph: the frog rears, his head snaps up with the
 jaw unhinged, "the sucker flexes on its brain, hungry") → **Latch** (4-6 and Drained +1).
 - Guard the Latch and the sucker slaps off his raised arms: the Host is stunned and the man's eyes
   clear for a moment. The next hit lands on the frog's bare belly for double. Then the frog crawls
   back onto his skull and the pattern restarts at Lash.
-- **The lesson:** read the coil, guard the latch, punish the stun.
+- **Freed** (agreed with world): kill the Host while it's stunned, the sucker torn out of his skull,
+  and the man lives. The death lines become "The frog peels away, spent. The man falls." / "He's
+  still breathing." and the result carries `flags.freed`. Any other kill: "He was already gone."
+  In the story, a freed Odo lives but is mute (the frog ate his words).
+- **The lesson:** read the coil, guard the latch, Crush the stun, and you save him.
+- **Why 58 HP:** two attacks (at least 9 each) plus a Crush on the stun (exactly 40) always come to
+  58 or more. So reading the first coil and Crushing the stun always frees him, in round 4. A
+  player who misses the first read gets a second cycle: the Host survives the extra attacks, and a
+  guarded second latch plus a Crush still frees him. At 80 HP, the Crush on the first stun left
+  him at ~17, and the next plain hit killed him outside a stun: the player who did it right lost
+  him (only 27/100 freed).
 
-Balance (`tools/smoke_test.gd`, seeds 1-100):
+Balance (`tools/smoke_test.gd`, seeds 1-100; every policy wins, the tutorial can't kill you):
 
-| play (autoplay policy) | wins | turns (min/avg/max) | HP left | notes |
+| play (autoplay policy) | turns (min/avg/max) | HP left | freed | notes |
 |---|---|---|---|---|
-| guard after the coil, no skills (`smart`) | 100/100 | 6 / 8.2 / 9 | 44 / 46.9 / 50 | never Drained |
-| ...and Crush saved for the stun (`skills`) | 100/100 | 5 / 6.4 / 8 | 44 / 47.6 / 54 | never Drained; ~5 MP left |
-| Crush whenever affordable, never guards (`spam`) | 100/100 | 5 / 6.5 / 7 | 18 / 27.3 / 38 | Drained ×1-2; MP gone |
-| attack only (`attack`) | 100/100 | 8 / 8.9 / 10 | 1 / 4.3 / 13 | Drained ×2-3; mercy catches it in 25/100 |
+| reads the first coil, Crushes the stun (`skills`, `save`) | 4 / 4 / 4 | 52-55 | 100/100 | never Drained |
+| misses the first read, catches the second (`learner`) | 7 / 7 / 7 | 34-54 | 100/100 | Drained ×1, uses a Salve |
+| guards every latch, never Crushes (`smart`) | 4 / 5.9 / 8 | 44-55 | 7/100 | never Drained |
+| Crushes early, never guards (`spam`) | 4 / 4.1 / 5 | 32-48 | 0/100 | Drained ×1 |
+| attack only (`attack`) | 5 / 6.2 / 7 | 18-38 | 0/100 | Drained ×1-2; mercy never needed |
 
-Guarding is what saves HP and MP; Crush is what buys speed. The tutorial's MP is generous, so saving
-Crush for the stun isn't yet faster than spending it early. Longer fights should make MP the
-constraint.
+Guarding is what saves him; Crush is the tool that does it. Spending Crush anywhere else is fast but
+gives him up.
 
 ## Starting a battle
 Agreed with world. The battle is a CanvasLayer (layer 10) that draws over the caller and keeps
@@ -115,8 +125,9 @@ battle.queue_free()
   - `can_run`: default false.
   - `mercy`: default on if an enemy's data asks for it.
   - `hero`: `{hp, mp, items, states, skills}` carried in from outside, otherwise fresh.
-- `result`: `{outcome: "won" | "lost" | "fled", hero: {hp, mp, items, states}, turns}`. States that
-  end with the battle (Drained, Stunned) aren't carried out.
+- `result`: `{outcome: "won" | "lost" | "fled", hero: {hp, mp, items, states}, turns, flags}`.
+  States that end with the battle (Drained, Stunned) aren't carried out. `flags` holds story flags
+  the fight raised (an enemy's `death_when`), e.g. `{"freed": true}`.
 - `scripts/main.gd` is the standalone tutorial the title screen opens. It runs the same call in a loop.
 
 ## Enemy art
@@ -136,7 +147,8 @@ characters). `say()` measures each line and warns when one doesn't fit; the wide
 
 ## Testing
 - `godot --headless --path . --script res://tools/smoke_test.gd -- smart` plays one fight and prints
-  every line. Policies: `smart`, `skills`, `spam`, `attack` (what each does is at the top of the file).
+  every line. Policies: `smart`, `skills`, `learner`, `save`, `spam`, `attack` (what each does is at
+  the top of the file). The summary counts story flags too ("freed in N/100").
   - `seed=N` replays a fight exactly.
   - `runs=N` prints a balance summary.
   - `troop=host,host` fights a group.

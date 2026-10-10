@@ -21,7 +21,7 @@ const HERO := {
 }
 
 const RULES := {
-	"variance": 0.15,     # attack-based hits roll x(1 - variance .. 1 + variance)
+	"variance": 0.15,     # attack-based hits roll x(1 - variance .. 1 + variance); a skill can set its own
 	"crit_chance": 0.1,   # for skills with "crit": true
 	"crit_mult": 1.5,
 	"guard_mult": 0.5,    # a guarded hit deals this much, rounded up
@@ -51,11 +51,12 @@ const SKILLS := {
 		"lines": [{"say": "{user} braces himself.", "sfx": "guard"}],
 	},
 	# The mute hero's skills are things he does, not words he says. Crush is the punish:
-	# x2, and x4 on a stunned enemy, so it's worth saving for the stun.
+	# x2, and x4 on a stunned enemy, so it's worth saving for the stun. A sure blow: no roll, no crit.
 	"crush": {
 		"name": "Crush",
 		"mp": 4,
 		"power": 2.0,
+		"variance": 0.0,
 		"lines": [{"say": "{user} throws his whole weight into it!", "hold": 0.35}],
 		"hit": "{Target} takes {dmg}.",
 	},
@@ -132,13 +133,16 @@ const ITEMS := {
 # Enemies. "name" is written as it reads mid-sentence. "sprite" picks art/monsters/<sprite>/
 # (normal.png, telegraph.png, stunned.png, hurt.png). "ai" picks a behaviour in
 # scripts/battle/enemy_ai.gd. "intro" opens the fight unless the caller brings its own,
-# "death" is said when it falls. "mercy": the hero can't drop below 1 HP in a fight with it.
-# "state_text": {state: {key: lines}} says a state's lines its own way.
+# "death" is said when it falls; "death_when": {state: {flag, lines}} replaces it when it falls
+# holding that state, and puts the flag in the battle's result. "mercy": the hero can't drop below
+# 1 HP in a fight with it. "state_text": {state: {key: lines}} says a state's lines its own way.
 const ENEMIES := {
 	"host": {
 		"name": "the Host",
 		"sprite": "host",
-		"max_hp": 80,
+		# 58 = two attacks (at least 9 each) + a Crush on the stun (exactly 40): read the first coil,
+		# Crush the stun, and the man is freed. Miss the first read and there's a second cycle.
+		"max_hp": 58,
 		"atk": 0,
 		"def": 0,
 		"agi": 6,
@@ -161,6 +165,13 @@ const ENEMIES := {
 			},
 		},
 		"death": ["The frog peels away, spent. The man falls.", "He was already gone."],
+		# Killed while stunned, its sucker torn out of his skull: the man lives (world: Odo).
+		"death_when": {
+			"stunned": {
+				"flag": "freed",
+				"lines": ["The frog peels away, spent. The man falls.", "He's still breathing."],
+			},
+		},
 	},
 }
 
