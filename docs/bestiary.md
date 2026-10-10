@@ -142,19 +142,37 @@ crossed by night on the ferrywoman's barge: the Mere's boss, after the Mouther a
 tells the hero to put Odo's lantern out - douse it and cross blind, or keep it lit and Old Iron
 comes. The battle is on the barge's deck at night: black water, fog, the barge's lantern swinging.
 
+## The Gorger (`gorger`) - Plenty's common pack monster
+
+**Look.** A walking stomach on stubby legs: a tiny head in a paper festival crown, cheeks stuffed,
+a napkin tucked in its collar spattered with sauce, and a second mouth grinning and chewing right
+across its belly - mouths budding where mouths shouldn't. Pink and greasy, almost funny. Focal
+accent: the belly-mouth.
+
+**Lore.** It ate the holy pig's meat and grew back fatter every time; now it can't stop.
+
+**Hook: it eats until it can't move.** Its telegraph is a feast: it shovels food into both mouths
+and heals. Then it puts itself out - bloated, it loses its next action and takes double, so a Crush
+that turn hits for four. A telegraph that is an **opening**, not a threat. In a pack they feast on
+their own clocks, not together: most rounds one is bloated, so the lesson is picking the open one.
+The feast heals less than the bloated punish deals (`@fights`).
+
+**Flavour.** Carnival.
+
+**Sprites.** `art/monsters/gorger/`, 72x80: `normal`, `normal_2`, `normal_3` (three individuals:
+fork and drumstick, a pie hugged to its belly, a string of sausages), `telegraph` (the feast: arms up
+shovelling, cheeks bulging, the belly-mouth gaping on food), `stunned` (bloated: swollen rounder,
+tipped back, legs splayed, eyes rolled, napkin popped, a puff of steam), `hurt`. Source:
+`tools/art/gorger.py`; sheet: `art/concepts/gorger_poses.png`.
+
 ## Plenty (region 2) - concepts, not final
 
 world's region 2: the mouth that **gorges**, carnival - bodies overflowing, almost funny, saturated
 (roast reds, yolk yellows, pinks), lit warmer and fuller than the fen (`carnival_light`). A regional
 idea: whatever ate the Ever-Sow's meat grows back, and **salt** stops it - the hero is applying to the
 Salt Guild. Concepts on `art/concepts/plenty_options.png` (source `tools/art/plenty_concepts.py`);
-hooks are proposals for `@fights`, placements for `@world`.
+hooks are proposals for `@fights`, placements for `@world`. Built so far: the Gorger (above).
 
-- **The Gorger** (`gorger`, a pack monster, 72x80). A walking stomach on stubby legs: a tiny head in a
-  paper festival crown, cheeks stuffed, a napkin tucked in its collar, a fork and a drumstick, and a
-  second mouth grinning and chewing right across its belly. *Hook - it eats until it can't move:* its
-  telegraph is a feast (it heals), and then it lies bloated and helpless for a round. A telegraph
-  that is an *opening*, not a threat: save Crush for the bloated turn.
 - **The Second Chin** (`second_chin`, 88x118). A pear-shaped alderman in roast-red velvet and a chain
   of office; his own little face, frightened, under a powdered wig - and under it a double chin grown
   into a face of its own, beady and sneering, that does the talking now. *Hook - the critic:* it
