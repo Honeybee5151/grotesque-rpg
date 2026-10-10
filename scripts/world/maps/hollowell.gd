@@ -2,7 +2,8 @@ extends "res://scripts/world/map.gd"
 ## Hollowell, in the Sallow Fen (dread): the prologue. A peat island of stilt-houses around one deep
 ## well, black water on every side. Odo goes down the well, the hero minds the rope, and comes back
 ## up alone to Moth's question. See docs/story.md.
-## Flags: opened, met_odo, odo_down, rope_cut, host_done (set in the cave), moth_read.
+## Flags: opened, met_odo, odo_down, rope_cut, host_done / odo_freed / odo_carried (set in the cave),
+## moth_read (how she read him: grief, hope, blame, cold - or, with Odo alive, truth, cold, two).
 
 const ODO := "Odo"
 const MOTH := "Moth"
@@ -87,9 +88,13 @@ func build() -> void:
 		_odo_light = light.add(odo.position + Vector2(-5, -8), 46.0, 0.95, true)
 		for x in range(6, 26):
 			triggers[Vector2i(x, 13)] = odo_calls
-	var waiting: bool = world.flags.get("host_done", false) and not world.flags.has("moth_read")
+	var freed: bool = world.flags.get("odo_carried", false)
+	var waiting: bool = world.flags.get("host_done", false) and not world.flags.has("moth_read") and not freed
 	moth = person("res://art/world/moth.png", Vector2i(15, 12) if waiting else MOTH_DOOR,
 		Vector2i.UP if waiting else Vector2i.DOWN)
+	if freed:
+		odo = person("res://art/world/odo_freed.png", Vector2i(14, 11), Vector2i.DOWN)
+		odo.talk = talk_freed_odo
 	moth.talk = talk_moth
 	landmarks["well"] = Vector2(WELL.x * TILE + TILE, WELL.y * TILE + TILE)
 	landmarks["moth"] = moth
@@ -105,15 +110,18 @@ func arrive(spawn: String) -> void:
 		await world.narrate("He coughed up black water, and nothing else.")
 		world.box.close()
 		await world.reveal(1.2)
-		await world.caption("(Arrows walk. Z talks, looks and answers.)", 2.5)
+		world.hint("Arrows walk.  Z talks, looks and answers.", 5.0)
 		return
 	await world.reveal()
 	if spawn == "well" and world.flags.get("host_done", false) and not world.flags.has("moth_read"):
-		await moth_asks()
+		if world.flags.get("odo_carried", false):
+			await reunion()
+		else:
+			await moth_asks()
 
 
 func _process(_delta: float) -> void:
-	if odo != null and _odo_light >= 0:
+	if odo != null and is_instance_valid(odo) and _odo_light >= 0:
 		light.move(_odo_light, odo.position + Vector2(-5, -8) + Vector2(0, odo.sprite.offset.y + 23))
 
 
@@ -160,6 +168,7 @@ func talk_odo() -> void:
 			await world.say(ODO, "...Right. My wife used to go quiet like that. Meant I was wrong.", ODO_PITCH)
 	await world.say(ODO, "Never mind. I talk enough for a parish. Here's the trouble.", ODO_PITCH)
 	await world.say(ODO, "The water's gone bad. Tastes of pennies.", ODO_PITCH)
+	await world.say(ODO, "Folk used to drop a penny down it for a wish. Something down there kept them.", ODO_PITCH)
 	await world.say(ODO, "Last night the bucket came up full of spawn. Black spawn.", ODO_PITCH)
 	await world.say(ODO, "So I'm going down. Somebody has to, and I'm the somebody.", ODO_PITCH)
 	await world.say(ODO, "You'll mind the rope? One tug, I'm fine. Two tugs, haul me up.", ODO_PITCH)
@@ -374,6 +383,83 @@ func moth_after() -> void:
 		"blame": await world.say(MOTH, "Don't come near me.", MOTH_PITCH)
 		"cold": await world.say(MOTH, "...", MOTH_PITCH)
 		_: await world.say(MOTH, "I'm keeping it lit. In case.", MOTH_PITCH)
+
+
+# --------------------------------------------------------------------------------------------
+# Odo, freed: the hero got the frog off him in time. He lives, and he can't speak.
+# --------------------------------------------------------------------------------------------
+
+func reunion() -> void:
+	player.face(Vector2i.LEFT)
+	await world.wait(0.6)
+	await world.say(MOTH, "DA!", MOTH_PITCH)
+	world.box.close()
+	moth.walk_speed_fast()
+	await moth.walk([Vector2i.DOWN, Vector2i.DOWN, Vector2i.DOWN, Vector2i.DOWN, Vector2i.DOWN, Vector2i.DOWN,
+		Vector2i.RIGHT, Vector2i.RIGHT, Vector2i.RIGHT, Vector2i.RIGHT, Vector2i.RIGHT, Vector2i.RIGHT, Vector2i.RIGHT])
+	moth.face(Vector2i.UP)
+	odo.face(Vector2i.DOWN)
+	await world.say(MOTH, "Da, your head. What's wrong with your head?", MOTH_PITCH)
+	await world.say(MOTH, "Da? Say something.", MOTH_PITCH)
+	await world.wait(0.5)
+	await world.caption("Odo opens his mouth. Nothing comes out.", 2.2)
+	moth.face_toward(player)
+	player.face_toward(moth)
+	await world.say(MOTH, "What's wrong with him? What did it DO?", MOTH_PITCH)
+	var points := {"well": "the well", "odo": "Odo", "self": "himself", "moth": "Moth"}
+	for attempt in 3:
+		var a: Dictionary = await world.ask(points)
+		var g: String = a["g"]
+		var at: String = a.get("at", "")
+		if g == "point" and (at == "well" or at == "odo"):
+			await world.say(MOTH, "The well did this? The thing down there?", MOTH_PITCH)
+			await world.say(MOTH, "...He went down to fix the water. He always fixes things.", MOTH_PITCH)
+			await reunion_ends("truth")
+			return
+		if g == "point" and at == "self":
+			await world.say(MOTH, "You did this?", MOTH_PITCH)
+			odo.face_toward(moth)
+			await world.caption("Odo catches her arm. He shakes his head.", 2.0)
+			await world.say(MOTH, "...No? Da says no.", MOTH_PITCH)
+			await reunion_ends("truth")
+			return
+		if g == "show":
+			await world.say(MOTH, "His lamp. You brought back his lamp, and him.", MOTH_PITCH)
+			world.items.erase("lantern")
+			await reunion_ends("truth")
+			return
+		if g == "shrug":
+			await world.say(MOTH, "Nobody knows anything in this whole stupid fen.", MOTH_PITCH)
+			await reunion_ends("cold")
+			return
+		if g == "silent":
+			await world.say(MOTH, "...Now there's two of you.", MOTH_PITCH)
+			await reunion_ends("two")
+			return
+		var push := ["Yes WHAT? That's not an answer!", "That's not an answer either!"]
+		await world.say(MOTH, push[mini(attempt, 1)], MOTH_PITCH)
+	await world.say(MOTH, "...Fine. Be quiet together, then.", MOTH_PITCH)
+	await reunion_ends("two")
+
+
+func reunion_ends(read: String) -> void:
+	world.flags["moth_read"] = read
+	odo.face_toward(player)
+	await world.wait(0.5)
+	await odo.bob()
+	await world.caption("Odo looks at the drowned man, and nods. Once.", 2.4)
+	await world.narrate("Odo never says another word. He doesn't need to.")
+	await world.narrate("He and the drowned man understand each other fine.")
+	await world.wait(0.6)
+	await world.cover(1.2)
+	await world.narrate("Hollowell. The end of the beginning.")
+	await world.narrate("(Thanks for playing this far. More of the fen is coming.)")
+	get_tree().change_scene_to_file("res://title.tscn")
+
+
+func talk_freed_odo() -> void:
+	await world.caption("Odo opens his mouth, and closes it again.", 1.8)
+	await odo.bob()
 
 
 func north_fog() -> void:

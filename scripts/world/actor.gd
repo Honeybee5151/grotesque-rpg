@@ -18,6 +18,7 @@ var talk := Callable()        # run when the hero faces this actor and presses Z
 var turns_to_talk := true     # face the hero when he talks to us
 var sprite: Sprite2D
 
+var speed := 1                # pixels per physics tick (must divide 16)
 var _dir := Vector2i.ZERO
 var _left := 0
 var _foot := false
@@ -112,6 +113,20 @@ func gesture(g: String, at := "") -> void:
 	_refresh()
 
 
+## Moves at a run (2px a tick) from now on.
+func walk_speed_fast() -> void:
+	speed = 2
+
+
+## A small nod for people whose sheets have no nod pose: the sprite dips a pixel, twice.
+func bob() -> void:
+	for i in 2:
+		sprite.offset.y += 1
+		await get_tree().create_timer(0.14).timeout
+		sprite.offset.y -= 1
+		await get_tree().create_timer(0.12).timeout
+
+
 func _hold(p: int, sec: float) -> void:
 	pose = p
 	_refresh()
@@ -121,8 +136,8 @@ func _hold(p: int, sec: float) -> void:
 func _physics_process(_delta: float) -> void:
 	if not moving:
 		return
-	position += Vector2(_dir)
-	_left -= 1
+	position += Vector2(_dir * speed)
+	_left -= speed
 	if _left <= 0:
 		moving = false
 	_refresh()

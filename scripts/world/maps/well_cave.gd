@@ -1,6 +1,7 @@
 extends "res://scripts/world/map.gd"
 ## The flooded cave under Hollowell's well (dread). Odo's lantern still burns on a rock; the Host
-## lurches out of the dark beyond it. Sets the flags host_done and odo_body (where he fell).
+## lurches out of the dark beyond it. Sets the flags host_done, odo_body (where he fell) and
+## odo_freed (the frog died while its sucker was torn out of him: he lives) / odo_carried.
 
 const LAYOUT := [
 	"########################",
@@ -97,6 +98,7 @@ func host_comes() -> void:
 		"bg": "cave",
 		"mercy": true,
 		"can_run": false,
+		"hero": {"skills": ["crush"]},    # Crush on the stun is what saves him; Mend comes later
 	})
 	var fell := host.cell
 	vacate(host.cell, host)
@@ -110,6 +112,7 @@ func host_comes() -> void:
 		return
 	world.flags["host_done"] = true
 	world.flags["odo_body"] = fell
+	world.flags["odo_freed"] = bool(result.get("flags", {}).get("freed", false))
 	lay_body(fell)
 
 
@@ -131,7 +134,18 @@ func lay_body(c: Vector2i) -> void:
 
 
 func look_odo() -> void:
-	await world.narrate("He lies face down. His mouth is open, as if he finally ran out of things to say.")
+	if not world.flags.get("odo_freed", false):
+		await world.narrate("He lies face down. His mouth is open, as if he finally ran out of things to say.")
+		return
+	await world.narrate("He's breathing. The crown of his head is a raw pink ring where the frog sat.")
+	await world.narrate("Get him up?")
+	if (await world.ask())["g"] != "nod":
+		await world.narrate("Odo breathes, slow and wet, in the dark.")
+		return
+	world.flags["odo_carried"] = true
+	await world.narrate("He gets an arm under Odo and hauls him, rung by rung, up toward the light.")
+	world.sfx.play("creak")
+	world.go("hollowell", "well")
 
 
 func take_lantern() -> void:
@@ -148,7 +162,7 @@ func take_lantern() -> void:
 
 
 func climb_up() -> void:
-	if not world.flags.get("host_done", false):
+	if not world.flags.get("host_done", false) or world.flags.get("odo_freed", false):
 		await world.narrate("The rungs go back up to the light. Not without Odo.")
 		return
 	await world.narrate("The rungs go back up to the light. Climb up?")

@@ -1,7 +1,8 @@
 extends CanvasLayer
-## The overworld's text box: a name tab, a typewriter and pop-up menus. Same windows as the battle,
-## so the two screens feel like one game. Z / Enter / Space / left click go on; X / Esc / right click
-## back out of a menu that allows it.
+## The overworld's text box: a name tab, a typewriter and pop-up menus, plus a small hint line at
+## the top of the screen. Same windows and font (theme.tres) as the battle, so the two screens feel
+## like one game. Z / Enter / Space / left click go on; X / Esc / right click back out of a menu
+## that allows it.
 
 signal _done(value: Variant)
 
@@ -23,6 +24,8 @@ var _cursor := 0
 var _cancelable := false
 var _state := ""          # "" | "typing" | "wait" | "caption" | "menu"
 var _skip := false
+var _hint: Label
+var _hint_serial := 0
 
 
 func _ready() -> void:
@@ -42,6 +45,12 @@ func _ready() -> void:
 	tw.tween_property(_more, "position:y", 45.0, 0.3)
 	tw.tween_property(_more, "position:y", 44.0, 0.3)
 	_menu = _window(Vector2.ZERO, Vector2(70, 20))
+	_hint = _label(self, Vector2(0, 3), Vector2(320, 11))
+	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_hint.add_theme_color_override("font_color", NARRATION)
+	_hint.add_theme_color_override("font_outline_color", Color("#07050d"))
+	_hint.add_theme_constant_override("outline_size", 2)
+	_hint.hide()
 	close()
 
 
@@ -87,8 +96,8 @@ func choose(rows: Array, cancelable := false) -> Variant:
 	_cancelable = cancelable
 	var widest := 0
 	for it: Dictionary in rows:
-		widest = maxi(widest, String(it["label"]).length())
-	var w := maxi(60, widest * 5 + 18)
+		widest = maxi(widest, _width("> " + String(it["label"])))
+	var w := maxi(56, widest + 12)
 	var h := 8 + rows.size() * 11
 	_menu.size = Vector2(w, h)
 	_menu.position = Vector2(320 - w - 4, BOX_POS.y - h - 3)
@@ -110,6 +119,23 @@ func choose(rows: Array, cancelable := false) -> Variant:
 	return v
 
 
+## A line at the top of the screen that doesn't stop anything (controls, small nudges).
+func hint(text: String, sec := 4.0) -> void:
+	_hint_serial += 1
+	var serial := _hint_serial
+	_hint.text = text
+	_hint.modulate.a = 1.0
+	_hint.show()
+	await get_tree().create_timer(sec).timeout
+	for a in [0.66, 0.33, 0.0]:
+		if serial != _hint_serial:
+			return
+		_hint.modulate.a = a
+		await get_tree().create_timer(0.12).timeout
+	if serial == _hint_serial:
+		_hint.hide()
+
+
 func close() -> void:
 	_panel.hide()
 	_tab.hide()
@@ -121,7 +147,7 @@ func _open(who: String) -> void:
 	_panel.show()
 	_tab.visible = who != ""
 	_tab_label.text = who
-	_tab.size.x = who.length() * 5 + 12
+	_tab.size.x = _width(who) + 11
 	_text.add_theme_color_override("font_color", Color.WHITE if who != "" else NARRATION)
 	_more.hide()
 
@@ -229,8 +255,13 @@ func _label(parent: Node, pos: Vector2, sz: Vector2) -> Label:
 	var l := Label.new()
 	l.position = pos
 	l.size = sz
-	l.add_theme_font_size_override("font_size", 8)
 	l.add_theme_constant_override("line_spacing", 1)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(l)
 	return l
+
+
+## Pixel width of `text` in the theme font.
+func _width(text: String) -> int:
+	var font := _tab_label.get_theme_font("font")
+	return int(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, _tab_label.get_theme_font_size("font_size")).x)

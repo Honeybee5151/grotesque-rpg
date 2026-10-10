@@ -6,7 +6,8 @@ extends SceneTree
 ## Steps: <Key>*n holds a direction for n tiles (U D L R), Z / X press a button, wait:<sec>,
 ## shot:<name> saves OUT_DIR/<name>.png, pick:<n> moves a menu cursor n down and confirms,
 ## until:<text> waits until the text box shows text containing <text> (max 20 s),
-## mash:<n> presses Z n times, a third of a second apart (to play through a battle).
+## mash:<n> presses Z n times, a third of a second apart; fight waits for a battle to start and
+## presses Z through it (always the first command: Attack) until the map is back.
 
 var world: Node
 var out_dir := ""
@@ -18,6 +19,8 @@ var _hold_left := 0.0
 var _until := ""
 var _until_t := 0.0
 var _mash := 0
+var _fight := 0          # 1: waiting for the battle, 2: in it
+var _fight_t := 0.0
 
 const DIRS := {"U": KEY_UP, "D": KEY_DOWN, "L": KEY_LEFT, "R": KEY_RIGHT}
 
@@ -60,6 +63,18 @@ func _process(delta: float) -> bool:
 	if _wait > 0.0:
 		_wait -= delta
 		return false
+	if _fight > 0:
+		_fight_t += delta
+		var hidden: bool = world.map != null and not world.map.visible
+		if _fight == 1 and (hidden or _fight_t > 30.0):
+			_fight = 2
+		elif _fight == 2 and not hidden:
+			_fight = 0
+			_wait = 0.8
+			print("fight: over after %.1f s" % _fight_t)
+		elif _fight == 2 and fmod(_fight_t, 0.3) < delta:
+			_tap(KEY_Z)
+		return false
 	if _mash > 0:
 		_mash -= 1
 		_tap(KEY_Z)
@@ -84,6 +99,16 @@ func _process(delta: float) -> bool:
 			_tap(KEY_DOWN)
 		_tap(KEY_Z)
 		_wait = 0.1
+	elif s == "dump":
+		var kids: Array[String] = []
+		for k in world.get_children():
+			kids.append("%s(%s)" % [k.name, k.get_class()])
+		print("dump: flags=", world.flags, " items=", world.items, " busy=", world.busy,
+			" map=", world.map.name if world.map else "-", " visible=", world.map.visible if world.map else false,
+			" hero=", world.hero_state, " kids=", kids)
+	elif s == "fight":
+		_fight = 1
+		_fight_t = 0.0
 	elif s.begins_with("mash:"):
 		_mash = int(s.substr(5))
 	elif s == "Z" or s == "X":

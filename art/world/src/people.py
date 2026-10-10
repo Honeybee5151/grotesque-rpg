@@ -545,3 +545,28 @@ FROG_SPENT = [
 
 def frog_spent():
     return Canvas.from_ascii(FROG_SPENT, HOST).outlined(OUTLINE)
+
+
+# Odo after the frog, if the hero freed him: drained pale, a raw pink ring on his crown where the
+# sucker sat (the one detail that says "the survivor" at any size), and no lantern - the hero has it.
+FREED = dict(ODO)
+FREED.update({"1": "#cbbcb6", "2": "#9c8a88", "3": "#6a5660", "c": "#cc4862", "r": "#7a1e3a"})
+RING = {"down": [(6, 0, "c"), (7, 0, "r"), (8, 0, "r"), (9, 0, "c"), (5, 1, "c"), (10, 1, "c")],
+        "up": [(6, 0, "c"), (7, 0, "r"), (8, 0, "r"), (9, 0, "c"), (5, 1, "c"), (10, 1, "c"), (6, 1, "c"), (9, 1, "c")],
+        "left": [(7, 0, "c"), (8, 0, "r"), (9, 0, "c"), (6, 1, "c"), (10, 1, "c")]}
+
+
+def _no_lantern(rows):
+    return ["".join("." if ch in "kYLy" else ch for ch in row) for row in rows]
+
+
+def _ringed(rows, facing):
+    rows = [list(r) for r in _no_lantern(rows)]
+    for x, y, k in RING[facing]:
+        rows[y][x] = k
+    return ["".join(r) for r in rows]
+
+
+def odo_freed():
+    return finish(figure({"down": _ringed(ODO_DOWN, "down"), "up": _ringed(ODO_UP, "up"),
+                          "left": _ringed(ODO_LEFT, "left")}, FREED, neck=7), 3)

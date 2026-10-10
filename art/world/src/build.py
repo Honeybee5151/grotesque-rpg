@@ -26,6 +26,7 @@ if __name__ == "__main__":
     save(sheet(people.hero(), 10), "hero.png")
     save(sheet(people.odo(), 3), "odo.png")
     save(sheet(people.moth(), 3), "moth.png")
+    save(sheet(people.odo_freed(), 3), "odo_freed.png")
     save(sheet(people.host(), 2), "host_walk.png")
     save(people.odo_dead(), "odo_dead.png")
     save(people.frog_spent(), "frog_spent.png")

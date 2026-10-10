@@ -9,7 +9,7 @@ extends Node2D
 
 const TextBox := preload("res://scripts/world/text_box.gd")
 const Sfx := preload("res://scripts/world/sfx.gd")
-const BATTLE := "res://scripts/battle/battle.gd"
+const Battle := preload("res://scripts/battle/battle.gd")
 
 ## What the gesture menu offers, and the caption shown while the hero acts it out.
 const GESTURES := [
@@ -101,6 +101,11 @@ func caption(text: String, sec := 0.7) -> void:
 	await box.caption(text, sec)
 
 
+## A hint at the top of the screen that doesn't hold anything up.
+func hint(text: String, sec := 4.0) -> void:
+	box.hint(text, sec)
+
+
 func choose(rows: Array, cancelable := false) -> Variant:
 	return await box.choose(rows, cancelable)
 
@@ -186,27 +191,21 @@ func _float(who: Node2D, path: String) -> Sprite2D:
 ## docs/world.md). Returns the battle's result; the hero's state carries into the next fight.
 func battle(enemy_ids: Array, context := {}) -> Dictionary:
 	busy += 1
-	if not hero_state.is_empty():
-		context["hero"] = hero_state
+	var carry: Dictionary = hero_state.duplicate()
+	carry.merge(context.get("hero", {}), true)    # the scene's own asks (skills) win
+	if not carry.is_empty():
+		context["hero"] = carry
 	sfx.play("swallow")
 	await cover(0.6)
 	box.close()
 	map.hide()
 	map.process_mode = Node.PROCESS_MODE_DISABLED
-	var result: Dictionary
-	if ResourceLoader.exists(BATTLE):
-		var b: Node = load(BATTLE).new()
-		add_child(b)
-		reveal(0.3)
-		result = await b.run(enemy_ids, context)
-		await cover(0.5)
-		b.queue_free()
-	else:
-		# fights' battle.gd isn't on this branch yet: say so instead of fighting.
-		await reveal(0.01)
-		await narrate("(The battle with %s goes here once fights' battle.gd is merged.)" % ", ".join(enemy_ids))
-		await cover(0.3)
-		result = {"outcome": "won", "hero": hero_state, "turns": 0}
+	var b: Node = Battle.new()
+	add_child(b)
+	reveal(0.3)
+	var result: Dictionary = await b.run(enemy_ids, context)
+	await cover(0.5)
+	b.queue_free()
 	hero_state = result.get("hero", hero_state)
 	map.process_mode = Node.PROCESS_MODE_INHERIT
 	map.show()
