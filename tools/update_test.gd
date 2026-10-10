@@ -34,6 +34,7 @@ func _run() -> void:
 			print("before: ", _version())
 			var applied: bool = boot.apply_pending_update()
 			print("applied=", applied, " after: ", _version())
+			boot.free()
 		"semver":
 			var U: GDScript = load("res://scripts/updater.gd")
 			var cases := [["0.2.0", "0.1.0", true], ["0.1.0", "0.1.0", false], ["0.1.9", "0.2.0", false],
@@ -43,6 +44,7 @@ func _run() -> void:
 				print("is_newer(%s, %s) = %s %s" % [c[0], c[1], got, "ok" if got == c[2] else "WRONG"])
 				if got != c[2]:
 					code = 1
+			print("semver: ", "all ok" if code == 0 else "WRONG")
 	quit(code)
 
 

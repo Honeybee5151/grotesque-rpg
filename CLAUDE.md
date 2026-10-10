@@ -32,6 +32,8 @@ world of wonderfully grotesque monsters. **Miles** is the director: big creative
   - Import: `godot --headless --path . --import`
   - Battle autoplay: `godot --headless --path . --script res://tools/smoke_test.gd -- smart` (and `-- attack`)
   - Play: `godot --path .`
+- All the merge checks in one go: `tools\check.ps1` (import, every script parses, boot to the title,
+  both autoplays; `-Updater` adds the updater test). Exits 1 on any failure.
 - Art: `python tools/art/host_concepts.py <outdir> a b c` (numpy + pillow);
   `python tools/art/grid.py in.png out.png x0 y0 x1 y1 scale` to read exact pixel coordinates.
 - To show Miles an image, save it and open it: `Start-Process <path.png>`.
@@ -51,7 +53,8 @@ world of wonderfully grotesque monsters. **Miles** is the director: big creative
   - world: `scenes/world/**`, `scripts/world/**`, `art/world/**`, `docs/world.md`, `docs/story.md`
   - fights: `scripts/main.gd`, `scripts/battle/**`, `scripts/data.gd`, `tools/smoke_test.gd`, `docs/combat.md`
   - misc: everything else (`project.godot`, title/menus, updater, `tools/` tests, CI, README, `team/`)
-- **Shipping work**: commit on your branch, push it, then message `@misc` "ready to merge: <summary>".
+- **Shipping work**: commit on your branch, run `tools\check.ps1`, push, then message `@misc`
+  "ready to merge: <summary>".
   misc merges into `main` after the checks pass and tells everyone. All checkouts share one repository,
   so pick up others' work any time with `git merge main` in your own checkout.
 - Anything that changes the game's direction goes to Miles first.
