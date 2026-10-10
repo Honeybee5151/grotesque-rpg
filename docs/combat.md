@@ -14,8 +14,9 @@ prove it with `tools/smoke_test.gd`.
   speech bubble only ever shows "...".
 
 ## A round
-1. **Command phase.** The player picks Attack / Guard / Item / Run. Run only works when the caller
-   allows it. With several enemies standing, Attack opens a target menu; cancelling backs out.
+1. **Command phase.** The player picks Attack / Skill / Guard / Item / Run. Skill lists the hero's
+   skills with their MP cost. Run only works when the caller allows it. With several enemies
+   standing, an attack opens a target menu. Cancelling backs out of any submenu.
 2. **Enemies decide.** Each enemy picks its move from its behaviour (`scripts/battle/enemy_ai.gd`)
    before anyone acts. An enemy never reacts to what the hero chose this round: everything it does
    can be read from what it did before.
@@ -36,7 +37,7 @@ The battle ends when every enemy has fallen (won), the hero falls (lost), or he 
 - At least 1 damage. A **guarded** hit deals half, rounded up.
 - **Mercy** (the tutorial): the hero can't drop below 1 HP.
 - The log and popups show the full hit on an enemy, and the HP actually lost on the hero.
-- Big hits (crits, hits on a stunned enemy) get the louder sound and the yellow popup.
+- Big hits (crits, hits on a stunned enemy) get the louder sound and taller yellow digits.
 
 ## Guard, telegraphs and stuns
 - **Telegraph:** the warning move before a big one. It gets its own pose (`telegraph.png`) and
@@ -57,9 +58,20 @@ The battle ends when every enemy has fallen (won), the hero falls (lost), or he 
 An enemy can say a state's lines its own way (`state_text`). The Host's stun says "For a moment,
 the man's eyes clear."
 
-## Hero and items
-- **Wanderer** (placeholder name): HP 60, MP 10, ATK 10, DEF 0, AGI 10. Nothing spends MP yet. Hero
-  skills come next, and they will make Drained's MP drain matter.
+## Hero, skills and items
+- **Wanderer** (placeholder name): HP 60, MP 10, ATK 10, DEF 0, AGI 10.
+- **Skills** are things he does, not words he says: he has no voice. MP is paid when the skill
+  goes off. If Drained has eaten it by then, "he tries, but he's spent."
+
+| skill | MP | effect | gesture |
+|---|---|---|---|
+| **Crush** | 4 | ×2 damage, no crit roll. On a stunned enemy that's ×4: the punish for a read telegraph. | "Wanderer throws his whole weight into it!" |
+| **Mend** | 3 | heals 16 HP | "Wanderer presses a hand to his wounds." |
+
+- Ten MP is two Crushes, or a Crush and two Mends. Drained takes 1 MP per stack every round, so a
+  missed telegraph costs skills as well as HP.
+- A caller can hand the hero a different skill list (`context.hero.skills`), e.g. while he's still
+  learning them.
 - **Salve** (2 per fight in the tutorial): heals 15 HP and cures Drained. It can only be used when
   it would help.
 
@@ -77,10 +89,16 @@ jaw unhinged, "the sucker flexes on its brain, hungry") → **Latch** (4-6 and D
 
 Balance (`tools/smoke_test.gd`, seeds 1-100):
 
-| play | wins | turns (min/avg/max) | HP left | notes |
+| play (autoplay policy) | wins | turns (min/avg/max) | HP left | notes |
 |---|---|---|---|---|
-| smart: guard after the coil | 100/100 | 6 / 8.2 / 9 | 44 / 46.9 / 50 | never Drained, no Salves |
-| attack only | 100/100 | 8 / 8.9 / 10 | 1 / 4.3 / 13 | Drained ×2-3; mercy catches it in 25/100 |
+| guard after the coil, no skills (`smart`) | 100/100 | 6 / 8.2 / 9 | 44 / 46.9 / 50 | never Drained |
+| ...and Crush saved for the stun (`skills`) | 100/100 | 5 / 6.4 / 8 | 44 / 47.6 / 54 | never Drained; ~5 MP left |
+| Crush whenever affordable, never guards (`spam`) | 100/100 | 5 / 6.5 / 7 | 18 / 27.3 / 38 | Drained ×1-2; MP gone |
+| attack only (`attack`) | 100/100 | 8 / 8.9 / 10 | 1 / 4.3 / 13 | Drained ×2-3; mercy catches it in 25/100 |
+
+Guarding is what saves HP and MP; Crush is what buys speed. The tutorial's MP is generous, so saving
+Crush for the stun isn't yet faster than spending it early. Longer fights should make MP the
+constraint.
 
 ## Starting a battle
 Agreed with world. The battle is a CanvasLayer (layer 10) that draws over the caller and keeps
@@ -96,7 +114,7 @@ battle.queue_free()
   - `bg`: backdrop, default `"cave"`.
   - `can_run`: default false.
   - `mercy`: default on if an enemy's data asks for it.
-  - `hero`: `{hp, mp, items, states}` carried in from outside, otherwise fresh.
+  - `hero`: `{hp, mp, items, states, skills}` carried in from outside, otherwise fresh.
 - `result`: `{outcome: "won" | "lost" | "fled", hero: {hp, mp, items, states}, turns}`. States that
   end with the battle (Drained, Stunned) aren't carried out.
 - `scripts/main.gd` is the standalone tutorial the title screen opens. It runs the same call in a loop.
@@ -117,8 +135,8 @@ characters). `say()` measures each line and warns when one doesn't fit; the wide
 - The format is documented at the top of `data.gd`.
 
 ## Testing
-- `godot --headless --path . --script res://tools/smoke_test.gd -- smart` (or `attack`) plays one
-  fight and prints every line.
+- `godot --headless --path . --script res://tools/smoke_test.gd -- smart` plays one fight and prints
+  every line. Policies: `smart`, `skills`, `spam`, `attack` (what each does is at the top of the file).
   - `seed=N` replays a fight exactly.
   - `runs=N` prints a balance summary.
   - `troop=host,host` fights a group.
@@ -128,8 +146,8 @@ characters). `say()` measures each line and warns when one doesn't fit; the wide
 
 ## Open questions
 - **Run** always succeeds. No fight allows it yet; decide odds and cost when the world needs it.
-- **Three wide enemies:** the floating command window covers most of the left one. Fine for two;
-  revisit with the first three-enemy fight (smaller monsters, or move the window).
-- **Hero skills** that spend MP are the next step.
-- **Big-hit digits:** crits and stun hits are yellow but the same size as other numbers, because
-  bitmap fonts don't scale. Monster will draw a taller digits set.
+- **Menus** hug the left edge (from x=4, as wide as their text) and grow upward from just above the
+  log. They're clear of a pair. A trio (80 wide each) loses its outer 14px to the main menu, and a bit
+  more to the wider skill and target submenus. Check that with the first three-enemy fight.
+- **More skills:** one per region, found like the new gestures in `docs/world.md`? To decide with
+  world.

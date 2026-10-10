@@ -7,8 +7,10 @@ const Data := preload("res://scripts/data.gd")
 const Sprites := preload("res://scripts/sprite_factory.gd")
 const Sfx := preload("res://scripts/battle/sfx.gd")
 const Battler := preload("res://scripts/battle/battler.gd")
-# Popups: chunky digits with the outline baked in (0-9 + - ! ? . / space); text is the theme's Grotesk.
+# Popups: chunky digits with the outline baked in (0-9 + - ! ? . / space), and a 2px taller set for
+# big hits (crits, hits on a stunned enemy). Text is the theme's Grotesk.
 const DIGITS := preload("res://art/fonts/grotesk_digits.fnt")
+const BIG_DIGITS := preload("res://art/fonts/grotesk_crit.fnt")
 
 const HOLD := 0.65          # seconds a finished line stays before the next one
 const GROUND_Y := 122.0     # enemies stand on this line, bottom-centred (docs/art.md)
@@ -16,6 +18,10 @@ const GAP := 4.0            # between enemy canvases; a formation is centred on 
 const BAR_W := 44.0
 const PLAYER_POPUP := Vector2(272, 118)
 const ENEMY_POPUP_Y := 50.0
+# Menus hug the left edge and grow upward from just above the log window, as narrow as their
+# text, so they stay clear of a pair of enemies (formations start at x=54 or further in).
+const MENU_LEFT := 4.0
+const MENU_BOTTOM := 120.0
 # art/monsters/<sprite>/<pose>.png at 1x, all on the same canvas (up to 104x118) and standing on
 # its bottom row. Missing poses fall back to normal.
 const POSES := ["normal", "telegraph", "stunned", "hurt"]
@@ -92,7 +98,7 @@ func set_pose(b: Battler, pose: String) -> void:
 	_show(f, f["poses"].get(pose, f["poses"]["normal"]))
 
 
-# big: a crit or a hit on a stunned enemy -- louder sound, bigger yellow number.
+# big: a crit or a hit on a stunned enemy -- louder sound, taller yellow number.
 func hit_enemy(b: Battler, dmg: int, big: bool) -> void:
 	var f: Dictionary = _foes[b]
 	var mat: ShaderMaterial = f["mat"]
@@ -104,7 +110,7 @@ func hit_enemy(b: Battler, dmg: int, big: bool) -> void:
 	if f["poses"].has("hurt"):
 		_show(f, f["poses"]["hurt"])
 		create_tween().tween_callback(_reshow.bind(b)).set_delay(0.3)
-	_popup(str(dmg), _enemy_popup_pos(b), Color("#ffe14a") if big else Color.WHITE)
+	_popup(str(dmg), _enemy_popup_pos(b), Color("#ffe14a") if big else Color.WHITE, BIG_DIGITS if big else DIGITS)
 
 
 func shake_enemy(b: Battler) -> void:
@@ -295,7 +301,8 @@ func menu(rows: Array, cancelable: bool = false, on_cursor: Callable = Callable(
 	var widest := 0.0
 	for it in rows:
 		widest = maxf(widest, _text_width(cmd_panel, "> " + String(it["label"])))
-	cmd_panel.size = Vector2(maxi(70, ceili(widest) + 12), 8 + rows.size() * 11)
+	cmd_panel.size = Vector2(ceili(widest) + 12, 8 + rows.size() * 11)
+	cmd_panel.position = Vector2(MENU_LEFT, MENU_BOTTOM - cmd_panel.size.y)
 	for i in rows.size():
 		var row := _make_label(cmd_panel, Vector2(5, 4 + i * 11), Vector2(cmd_panel.size.x - 8, 11))
 		row.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -490,10 +497,10 @@ func _text_width(node: Control, text: String) -> float:
 # Effects
 # ======================================================================================
 
-func _popup(text: String, pos: Vector2, col: Color) -> void:
+func _popup(text: String, pos: Vector2, col: Color, font: Font = DIGITS) -> void:
 	var l := Label.new()
 	l.text = text
-	l.add_theme_font_override("font", DIGITS)
+	l.add_theme_font_override("font", font)
 	l.add_theme_color_override("font_color", col)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.size = Vector2(40, 14)

@@ -2,9 +2,12 @@ extends SceneTree
 ## Headless autoplay of battles, for regression and balance checks.
 ##   godot --headless --path . --script res://tools/smoke_test.gd -- smart
 ##   godot --headless --path . --script res://tools/smoke_test.gd -- attack runs=200
-## Policies: "smart" guards when an enemy telegraphs and salves when Drained and low;
+## Policies: "smart" guards when an enemy telegraphs and salves when Drained and low (no skills);
+## "skills" plays smart and saves Crush for a stunned enemy, Mends when low;
+## "spam" Crushes whenever it can afford to, otherwise attacks;
 ## "attack" only ever attacks: it always gets Drained, and in the tutorial mercy (1 HP floor)
 ## catches it now and then -- the summary counts how often.
+## Any policy aims at a stunned enemy when it has a choice.
 ## Options: seed=N (first seed, default 1); runs=N (battles on seeds N, N+1, ..., then a balance
 ## summary); troop=host,host (enemy ids); log=1/0 (every line of every battle, default: on for a
 ## single battle). The same seed replays the same fight, so a refactor can be diffed line by line.
@@ -22,6 +25,7 @@ var battle: Battle
 var turn := 0
 var printed := 0
 var seen_menu := 0
+var want := ""  # the row to pick in the submenu the last command opens (item or skill)
 var frames := 0
 var lowest_hp := 0
 var most_drained := 0
@@ -95,6 +99,7 @@ func _run_one(s: int) -> Dictionary:
 	print("=== RESULT: %s | hero hp=%d mp=%d drained=%d salves=%d | turns=%d" % [
 		outcome, battle.hero.hp, battle.hero.mp, battle.hero.stacks("drained"), salves, turn])
 	var row := {"won": r["outcome"] == "won", "turns": turn, "hp": battle.hero.hp, "frames": frames,
+		"mp": battle.hero.mp,
 		"lowest": lowest_hp, "drained": most_drained,
 		"salves": int(Data.ITEMS["salve"]["start"]) - salves}
 	battle.queue_free()
@@ -123,24 +128,53 @@ func _decide() -> void:
 			for e in battle.enemies:
 				foes.append("%s %d%s" % [e.id, e.hp, " stunned" if e.stacks("stunned") > 0 else ""])
 			print("[turn %d] hp=%d mp=%d drained=%d | %s" % [turn, h.hp, h.mp, h.stacks("drained"), ", ".join(foes)])
-		var choice := "attack"
-		if policy == "smart":
-			if battle.enemies.any(func(e) -> bool: return e.alive() and e.telegraphing):
-				choice = "guard"
-			elif h.stacks("drained") > 0 and h.hp < 40 and int(battle.items.get("salve", 0)) > 0:
-				choice = "item"
-		_pick(choice)
+		var choice := _choose().split(":")
+		want = choice[1] if choice.size() > 1 else ""
+		_pick(choice[0])
 	elif first is String:
-		_pick("salve")  # the item menu
+		_pick(want)  # the item or skill menu
 	else:
-		v.menu_cursor = 0  # a target menu: the leftmost enemy standing
+		# A target menu: a stunned enemy if there is one, else the leftmost standing.
+		v.menu_cursor = 0
+		for i in v.menu_items.size():
+			if v.menu_items[i]["value"].stacks("stunned") > 0:
+				v.menu_cursor = i
+				break
 		v.action("ok")
+
+
+# "attack", "guard", "item:salve", "skill:crush"...
+func _choose() -> String:
+	var h := battle.hero
+	var telegraph := battle.enemies.any(func(e) -> bool: return e.alive() and e.telegraphing)
+	var stunned := battle.enemies.any(func(e) -> bool: return e.alive() and e.stacks("stunned") > 0)
+	var salves: int = battle.items.get("salve", 0)
+	match policy:
+		"smart", "skills":
+			if telegraph:
+				return "guard"
+			if policy == "skills" and stunned and _affords("crush"):
+				return "skill:crush"
+			if policy == "skills" and h.hp < 25 and _affords("mend"):
+				return "skill:mend"
+			if h.stacks("drained") > 0 and h.hp < 40 and salves > 0:
+				return "item:salve"
+		"spam":
+			if _affords("crush"):
+				return "skill:crush"
+	return "attack"
+
+
+func _affords(skill: String) -> bool:
+	return skill in battle.hero.skills and battle.hero.mp >= int(Data.SKILLS[skill].get("mp", 0))
 
 
 func _pick(value: String) -> void:
 	var v := battle.view
 	for i in v.menu_items.size():
 		if v.menu_items[i]["value"] == value:
+			if not v.menu_items[i].get("enabled", true):
+				push_error("menu row '%s' is disabled" % value)
 			v.menu_cursor = i
 			v.action("ok")
 			return
@@ -155,6 +189,7 @@ func _summary(rows: Array) -> void:
 	print("won %d/%d | turns %s | hp left %s | lowest hp %s | most drained %s | salves used %s" % [
 		won, rows.size(), _spread(rows, "turns"), _spread(rows, "hp"), _spread(rows, "lowest"),
 		_spread(rows, "drained"), _spread(rows, "salves")])
+	print("mp left %s" % _spread(rows, "mp"))
 	print("down to 1 HP (mercy's floor, if on) in %d/%d" % [floored, rows.size()])
 	print("frames per battle %s" % _spread(rows, "frames"))
 

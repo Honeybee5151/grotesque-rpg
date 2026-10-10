@@ -6,7 +6,7 @@ extends CanvasLayer
 ##   battle.queue_free()
 ## context, all optional: intro (lines replacing the first enemy's own), bg ("cave"),
 ##   can_run (false), mercy (default: on if an enemy's data asks for it),
-##   hero {hp, mp, items, states} carried in from outside (default: fresh).
+##   hero {hp, mp, items, states, skills} carried in from outside (default: fresh).
 ## result: {outcome: "won" | "lost" | "fled", hero: {hp, mp, items, states}, turns}.
 ## The battle draws on its own layer over whatever is underneath and keeps running while that
 ## is paused or disabled. The rules are in docs/combat.md; numbers and lines in scripts/data.gd.
@@ -119,6 +119,7 @@ func _command_phase() -> Dictionary:
 	while true:
 		var cmd: Variant = await view.menu([
 			{"label": "Attack", "value": "attack"},
+			{"label": "Skill", "value": "skill", "enabled": not hero.skills.is_empty()},
 			{"label": "Guard", "value": "guard"},
 			{"label": "Item", "value": "item"},
 			{"label": "Run", "value": "run", "enabled": can_run},
@@ -127,14 +128,18 @@ func _command_phase() -> Dictionary:
 			var id: Variant = await _item_menu()
 			if id != null:
 				return {"user": hero, "item": id}
-		elif cmd == "run":
+			continue
+		if cmd == "run":
 			return {"user": hero, "run": true}
-		elif Data.SKILLS[cmd].get("target", "enemy") == "self":
-			return {"user": hero, "skill": cmd, "target": hero}
-		else:
-			var target: Variant = await _pick_enemy()
-			if target != null:
-				return {"user": hero, "skill": cmd, "target": target}
+		if cmd == "skill":
+			cmd = await _skill_menu()
+			if cmd == null:
+				continue
+		var target: Variant = hero
+		if Data.SKILLS[cmd].get("target", "enemy") != "self":
+			target = await _pick_enemy()
+		if target != null:
+			return {"user": hero, "skill": cmd, "target": target}
 	return {}
 
 
@@ -149,6 +154,25 @@ func _pick_enemy() -> Variant:
 	var picked: Variant = await view.menu(rows, true, view.select_enemy)
 	view.select_enemy(null)
 	return picked
+
+
+func _skill_menu() -> Variant:
+	var rows: Array = []
+	for id in hero.skills:
+		var sk: Dictionary = Data.SKILLS[id]
+		rows.append({
+			"label": "%s  %d MP" % [sk["name"], sk.get("mp", 0)],
+			"value": id,
+			"enabled": _can_use(hero, sk),
+		})
+	return await view.menu(rows, true)
+
+
+# Enough MP for it, and a healing move only when there's something to heal.
+func _can_use(b: Battler, sk: Dictionary) -> bool:
+	if b.mp < int(sk.get("mp", 0)):
+		return false
+	return not sk.has("heal") or b.hp < b.max_hp
 
 
 func _item_menu() -> Variant:
@@ -197,6 +221,7 @@ func _settle() -> void:
 			await view.kill_enemy(e)
 			for line in e.data.get("death", []):
 				await _say(line, {"user": e})
+			e.states.clear()
 	if enemies.all(func(e: Battler) -> bool: return not e.alive()):
 		for s in hero.states.keys():
 			if Data.STATES[s].get("ends_with_battle", false):
@@ -240,12 +265,22 @@ func _use_skill(user: Battler, id: String, target: Battler) -> void:
 			return
 		target = standing[0]
 	var vars := {"user": user, "target": target}
+	var cost: int = sk.get("mp", 0)
+	if user.mp < cost:
+		for line in Data.TEXT["no_mp"]:
+			await _say(line, vars)
+		return
+	user.mp -= cost
+	view.refresh_status(hero)
 	for line in sk.get("lines", []):
 		await _say(line, vars)
 	if sk.get("guard", false):
 		user.guarding = true
 	if sk.has("power") or sk.has("dmg"):
 		await _strike(user, target, sk, vars)
+	if sk.has("heal"):
+		var healed := _heal(target, int(sk["heal"]))
+		await _say(_fill(Data.TEXT["heal"], {"heal": healed}))
 	user.telegraphing = sk.get("telegraph", false)
 	_update_pose(user)
 
@@ -306,16 +341,12 @@ func _hurt(b: Battler, d: int, big: bool = false) -> int:
 func _use_item(user: Battler, id: String) -> void:
 	var it: Dictionary = Data.ITEMS[id]
 	items[id] = int(items[id]) - 1
-	var healed := mini(int(it.get("heal", 0)), user.max_hp - user.hp)
 	var cured: Array[String] = []
 	for s in it.get("cures", []):
 		if user.stacks(s) > 0:
 			cured.append(s)
 			user.states.erase(s)
-	user.hp += healed
-	view.refresh_status(hero)
-	if healed > 0:
-		view.popup_hero("+%d" % healed, Color("#7dff8c"))
+	var healed := _heal(user, int(it.get("heal", 0)))
 	for line in it.get("lines", []):
 		await _say(line, {"user": user})
 	var parts: Array[String] = []
@@ -325,6 +356,18 @@ func _use_item(user: Battler, id: String) -> void:
 		parts.append(Data.STATES[s]["cure"])
 	if not parts.is_empty():
 		await _say(" ".join(parts))
+
+
+# Heals up to max HP and shows it; returns how much it healed.
+func _heal(b: Battler, amount: int) -> int:
+	var healed := mini(amount, b.max_hp - b.hp)
+	b.hp += healed
+	view.refresh_status(hero)
+	if healed > 0 and b.is_hero:
+		view.popup_hero("+%d" % healed, Color("#7dff8c"))
+	elif healed > 0:
+		view.popup_enemy(b, "+%d" % healed, Color("#7dff8c"))
+	return healed
 
 
 # ======================================================================================
