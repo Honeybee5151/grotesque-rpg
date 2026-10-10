@@ -137,7 +137,13 @@ function Find-Bash {
 }
 
 Say "Checking $Root" Cyan
-Report 'import' (Invoke-Native $Godot @('--headless', '--path', $Root, '--import') 600)
+$run = Invoke-Native $Godot @('--headless', '--path', $Root, '--import') 600
+if (Get-Matches (@($run.Err) + @($run.Out)) $ErrorPattern) {
+    # A fresh checkout has no import cache yet: the project theme loads before its font is imported
+    # and complains. The second import shows the real state.
+    $run = Invoke-Native $Godot @('--headless', '--path', $Root, '--import') 600
+}
+Report 'import' $run
 $run = Invoke-Native $Godot @('--headless', '--path', $Root, '--script', 'res://tools/check_scripts.gd') 120
 Report 'scripts' $run '^=== SCRIPTS:' '^=== SCRIPTS:'
 if ($Stop) { Skip 'boot' } else {
