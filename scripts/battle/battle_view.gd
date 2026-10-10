@@ -7,10 +7,12 @@ const Data := preload("res://scripts/data.gd")
 const Sprites := preload("res://scripts/sprite_factory.gd")
 const Sfx := preload("res://scripts/battle/sfx.gd")
 const Battler := preload("res://scripts/battle/battler.gd")
+# Popups: chunky digits with the outline baked in (0-9 + - ! ? . / space); text is the theme's Grotesk.
+const DIGITS := preload("res://art/fonts/grotesk_digits.fnt")
 
 const HOLD := 0.65          # seconds a finished line stays before the next one
 const GROUND_Y := 122.0     # enemies stand on this line, bottom-centred (docs/art.md)
-const SLOT_W := 104.0       # one battler canvas wide: enemies stand this far apart
+const GAP := 4.0            # between enemy canvases; a formation is centred on x=160
 const BAR_W := 44.0
 const PLAYER_POPUP := Vector2(272, 118)
 const ENEMY_POPUP_Y := 50.0
@@ -66,8 +68,17 @@ func build(bg: String, hero: Battler, enemies: Array) -> void:
 	_build_backdrop(bg)
 	_shader = Shader.new()
 	_shader.code = SHADER
+	# Canvases side by side, GAP apart, the whole formation centred.
+	var poses: Array = []
+	var total := GAP * (enemies.size() - 1)
+	for e in enemies:
+		poses.append(_load_poses(e))
+		total += poses.back()["normal"].get_width()
+	var left := floorf(160.0 - total / 2.0)
 	for i in enemies.size():
-		_add_enemy(enemies[i], 160.0 + (i - (enemies.size() - 1) / 2.0) * SLOT_W)
+		var w: float = poses[i]["normal"].get_width()
+		_add_enemy(enemies[i], poses[i], floorf(left + w / 2.0))
+		left += w + GAP
 	_build_ui(hero)
 
 
@@ -93,7 +104,7 @@ func hit_enemy(b: Battler, dmg: int, big: bool) -> void:
 	if f["poses"].has("hurt"):
 		_show(f, f["poses"]["hurt"])
 		create_tween().tween_callback(_reshow.bind(b)).set_delay(0.3)
-	_popup(str(dmg), _enemy_popup_pos(b), Color("#ffe14a") if big else Color.WHITE, 14 if big else 12)
+	_popup(str(dmg), _enemy_popup_pos(b), Color("#ffe14a") if big else Color.WHITE)
 
 
 func shake_enemy(b: Battler) -> void:
@@ -140,11 +151,11 @@ func select_enemy(b: Variant) -> void:
 	_blink.tween_property(mat, "shader_parameter/flash", 0.0, 0.25)
 
 
-func popup_enemy(b: Battler, text: String, col: Color, font_size: int = 10) -> void:
-	_popup(text, _enemy_popup_pos(b), col, font_size)
+func popup_enemy(b: Battler, text: String, col: Color) -> void:
+	_popup(text, _enemy_popup_pos(b), col)
 
 
-func _add_enemy(b: Battler, x: float) -> void:
+func _load_poses(b: Battler) -> Dictionary:
 	var art: String = b.data.get("sprite", b.id)
 	var poses := {}
 	for pose in POSES:
@@ -156,6 +167,10 @@ func _add_enemy(b: Battler, x: float) -> void:
 		var img := Image.create_empty(24, 24, false, Image.FORMAT_RGBA8)
 		img.fill(Color("#ff00ff"))
 		poses["normal"] = ImageTexture.create_from_image(img)
+	return poses
+
+
+func _add_enemy(b: Battler, poses: Dictionary, x: float) -> void:
 	var mat := ShaderMaterial.new()
 	mat.shader = _shader
 	mat.set_shader_parameter("flash", 0.0)  # set up front: tweens need them to exist
@@ -200,13 +215,13 @@ func hurt_hero(lost: int) -> void:
 	_popup(str(lost), PLAYER_POPUP, Color("#ff6b6b"))
 
 
-func popup_hero(text: String, col: Color, font_size: int = 12) -> void:
-	_popup(text, PLAYER_POPUP, col, font_size)
+func popup_hero(text: String, col: Color) -> void:
+	_popup(text, PLAYER_POPUP, col)
 
 
 # The mute hero's speech bubble: a gesture, never words.
 func hero_gestures(text: String) -> void:
-	_popup(text, PLAYER_POPUP, Color("#b8b0e0"), 10)
+	_popup(text, PLAYER_POPUP, Color("#b8b0e0"))
 
 
 func refresh_status(h: Battler) -> void:
@@ -226,8 +241,8 @@ func refresh_status(h: Battler) -> void:
 # ======================================================================================
 
 func say(text: String, hold: float = HOLD) -> void:
-	if text.length() > 44:
-		push_warning("message too long for the log window: " + text)
+	if _text_width(log_label, text) > log_label.size.x:
+		push_warning("too wide for the log window: " + text)
 	transcript.append(text)
 	_log_lines.append("")
 	if _log_lines.size() > 3:
@@ -277,10 +292,10 @@ func menu(rows: Array, cancelable: bool = false, on_cursor: Callable = Callable(
 	menu_items = rows
 	_menu_cancelable = cancelable
 	_on_cursor = on_cursor
-	var widest := 0
+	var widest := 0.0
 	for it in rows:
-		widest = maxi(widest, String(it["label"]).length())
-	cmd_panel.size = Vector2(maxi(70, widest * 5 + 18), 8 + rows.size() * 11)
+		widest = maxf(widest, _text_width(cmd_panel, "> " + String(it["label"])))
+	cmd_panel.size = Vector2(maxi(70, ceili(widest) + 12), 8 + rows.size() * 11)
 	for i in rows.size():
 		var row := _make_label(cmd_panel, Vector2(5, 4 + i * 11), Vector2(cmd_panel.size.x - 8, 11))
 		row.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -406,11 +421,10 @@ func _make_window(pos: Vector2, sz: Vector2) -> Panel:
 	return p
 
 
-func _make_label(parent: Node, pos: Vector2, sz: Vector2, font_size: int = 8) -> Label:
+func _make_label(parent: Node, pos: Vector2, sz: Vector2) -> Label:
 	var l := Label.new()
 	l.position = pos
 	l.size = sz
-	l.add_theme_font_size_override("font_size", font_size)
 	l.add_theme_constant_override("line_spacing", 1)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(l)
@@ -466,17 +480,21 @@ func _refresh_log() -> void:
 	log_label.text = "\n".join(_log_lines)
 
 
+# Pixel width of a line in the theme font, as a Label under `node` would draw it.
+func _text_width(node: Control, text: String) -> float:
+	var font := node.get_theme_font("font", "Label")
+	return font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, node.get_theme_font_size("font_size", "Label")).x
+
+
 # ======================================================================================
 # Effects
 # ======================================================================================
 
-func _popup(text: String, pos: Vector2, col: Color, font_size: int = 12) -> void:
+func _popup(text: String, pos: Vector2, col: Color) -> void:
 	var l := Label.new()
 	l.text = text
-	l.add_theme_font_size_override("font_size", font_size)
+	l.add_theme_font_override("font", DIGITS)
 	l.add_theme_color_override("font_color", col)
-	l.add_theme_color_override("font_outline_color", Color.BLACK)
-	l.add_theme_constant_override("outline_size", 3)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.size = Vector2(40, 14)
 	l.position = pos - Vector2(20, 8)
