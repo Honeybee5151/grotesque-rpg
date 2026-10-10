@@ -10,6 +10,7 @@
     autoplay smart troop=host,host   two enemies: the target menu and multi-enemy battles
     autoplay skills   the Skill submenu, spending MP
     autoplay thin troop=penny_leech x3   a pack: chorus moves, slot variants, no mercy
+    autoplay expert troop=mouther   breaking a telegraph (Crush mid-inhale), the steal
     world             scripts/world/dev/world_test.gd: plays the prologue headless, both endings
     export            the game.pck players get (export filters, remaps), then boot, the battle
                       and the world run from it - catches files that work here but don't ship
@@ -32,7 +33,7 @@ param([switch]$Updater)
 $Root = Split-Path -Parent $PSScriptRoot
 $Godot = if ($env:GODOT) { $env:GODOT } else { 'godot' }
 # One autoplay per entry: the smoke_test.gd arguments (fights owns the autoplay; they say what to run).
-$Policies = @('smart', 'attack', 'smart troop=host,host', 'skills', 'thin troop=penny_leech,penny_leech,penny_leech')
+$Policies = @('smart', 'attack', 'smart troop=host,host', 'skills', 'thin troop=penny_leech,penny_leech,penny_leech', 'expert troop=mouther')
 
 $ErrorPattern = '^\s*(SCRIPT ERROR|USER ERROR|ERROR):|Parse Error'
 $WarningPattern = '^\s*(USER WARNING|WARNING):'
