@@ -11,6 +11,7 @@
     autoplay skills   the Skill submenu, spending MP
     autoplay thin troop=penny_leech x3   a pack: chorus moves, slot variants, no mercy
     autoplay expert troop=mouther   breaking a telegraph (Crush mid-inhale), the steal
+    autoplay expert troop=old_iron [flags=lamp_lit]   the boss: phases, wounds, ambush; the lamp path
     world             scripts/world/dev/world_test.gd -- story: both prologue endings, headless (~1 min);
                       with -Release also the sweep that tries every answer at every prompt (~3 min)
     export            the game.pck players get (export filters, remaps), then boot, the battle
@@ -37,7 +38,7 @@ if ($Release) { $Updater = $true }
 $Root = Split-Path -Parent $PSScriptRoot
 $Godot = if ($env:GODOT) { $env:GODOT } else { 'godot' }
 # One autoplay per entry: the smoke_test.gd arguments (fights owns the autoplay; they say what to run).
-$Policies = @('smart', 'attack', 'smart troop=host,host', 'skills', 'thin troop=penny_leech,penny_leech,penny_leech', 'expert troop=mouther')
+$Policies = @('smart', 'attack', 'smart troop=host,host', 'skills', 'thin troop=penny_leech,penny_leech,penny_leech', 'expert troop=mouther', 'expert troop=old_iron', 'expert troop=old_iron flags=lamp_lit')
 
 $ErrorPattern = '^\s*(SCRIPT ERROR|USER ERROR|ERROR):|Parse Error'
 $WarningPattern = '^\s*(USER WARNING|WARNING):'
