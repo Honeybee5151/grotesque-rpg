@@ -269,12 +269,18 @@ func _strike(user: Battler, target: Battler, sk: Dictionary, vars: Dictionary) -
 	var crit: bool = sk.get("crit", false) and randf() < float(r["crit_chance"])
 	if crit:
 		d = roundi(d * float(r["crit_mult"]))
+	var line: String = sk["crit_hit"] if crit and sk.has("crit_hit") else sk.get("hit", "")
+	var exposed := false
+	for s in target.states:
+		if Data.STATES[s].has("damage_taken"):
+			d = roundi(d * float(Data.STATES[s]["damage_taken"]))
+			line = _state_text(target, s, "hit", line)
+			exposed = true
 	d = maxi(int(r["min_damage"]), d)
 	var guarded := target.guarding
 	if guarded:
 		d = ceili(d * float(r["guard_mult"]))
-	vars["dmg"] = _hurt(target, d, crit)
-	var line: String = sk["crit_hit"] if crit and sk.has("crit_hit") else sk.get("hit", "")
+	vars["dmg"] = _hurt(target, d, crit or exposed)
 	if line != "":
 		await _say(_fill(line, vars) + (Data.TEXT["guarded"] if guarded else ""))
 	var onto_target: Dictionary = sk.get("states", {})
@@ -284,10 +290,10 @@ func _strike(user: Battler, target: Battler, sk: Dictionary, vars: Dictionary) -
 
 # Takes the hit and shows it. Returns the number for the log: the whole hit on an enemy, the HP
 # actually lost on the hero (mercy can soften it).
-func _hurt(b: Battler, d: int, crit: bool = false) -> int:
+func _hurt(b: Battler, d: int, big: bool = false) -> int:
 	if not b.is_hero:
 		b.hp = maxi(0, b.hp - d)
-		view.hit_enemy(b, d, crit)
+		view.hit_enemy(b, d, big)
 		return d
 	var before := b.hp
 	b.hp = maxi(1 if mercy else 0, b.hp - d)
@@ -330,7 +336,7 @@ func _add_state(b: Battler, s: String, n: int) -> void:
 	b.states[s] = mini(int(st.get("max_stacks", 1)), b.stacks(s) + n)
 	view.refresh_status(hero)
 	_update_pose(b)
-	for line in st.get("apply", []):
+	for line in _state_text(b, s, "apply", []):
 		await _say(line, {"name": b, "stacks": b.states[s]})
 
 
@@ -346,7 +352,7 @@ func _tick(b: Battler, s: String, st: Dictionary) -> void:
 	else:
 		view.popup_enemy(b, "-%d" % lost, Color("#ff9ab8"))
 	view.refresh_status(hero)
-	for line in st.get("tick", []):
+	for line in _state_text(b, s, "tick", []):
 		await _say(line, {"name": b, "hp": lost, "mp": mp_loss, "stacks": n})
 
 
@@ -356,11 +362,16 @@ func _lose_turn(b: Battler) -> void:
 	if not b.is_hero:
 		EnemyAI.lost_turn(b)
 	for s in b.states:
-		var st: Dictionary = Data.STATES[s]
-		if st.get("skip_turn", false):
-			for line in st.get("skip", []):
+		if Data.STATES[s].get("skip_turn", false):
+			for line in _state_text(b, s, "skip", []):
 				await _say(line, {"name": b})
 			return
+
+
+# A state's lines (key: "apply", "hit", "skip", "tick"), or the holder's own version of them.
+func _state_text(b: Battler, s: String, key: String, fallback: Variant) -> Variant:
+	var own: Dictionary = b.data.get("state_text", {}).get(s, {})
+	return own.get(key, Data.STATES[s].get(key, fallback))
 
 
 func _update_pose(b: Battler) -> void:

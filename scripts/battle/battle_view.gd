@@ -81,10 +81,11 @@ func set_pose(b: Battler, pose: String) -> void:
 	_show(f, f["poses"].get(pose, f["poses"]["normal"]))
 
 
-func hit_enemy(b: Battler, dmg: int, crit: bool) -> void:
+# big: a crit or a hit on a stunned enemy -- louder sound, bigger yellow number.
+func hit_enemy(b: Battler, dmg: int, big: bool) -> void:
 	var f: Dictionary = _foes[b]
 	var mat: ShaderMaterial = f["mat"]
-	sfx("crit" if crit else "hit")
+	sfx("crit" if big else "hit")
 	mat.set_shader_parameter("flash_color", Color.WHITE)
 	mat.set_shader_parameter("flash", 1.0)
 	create_tween().tween_property(mat, "shader_parameter/flash", 0.0, 0.12)
@@ -92,7 +93,7 @@ func hit_enemy(b: Battler, dmg: int, crit: bool) -> void:
 	if f["poses"].has("hurt"):
 		_show(f, f["poses"]["hurt"])
 		create_tween().tween_callback(_reshow.bind(b)).set_delay(0.3)
-	_popup(str(dmg), _enemy_popup_pos(b), Color("#ffe14a") if crit else Color.WHITE, 14 if crit else 12)
+	_popup(str(dmg), _enemy_popup_pos(b), Color("#ffe14a") if big else Color.WHITE, 14 if big else 12)
 
 
 func shake_enemy(b: Battler) -> void:

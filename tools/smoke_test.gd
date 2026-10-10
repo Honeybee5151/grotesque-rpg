@@ -3,7 +3,8 @@ extends SceneTree
 ##   godot --headless --path . --script res://tools/smoke_test.gd -- smart
 ##   godot --headless --path . --script res://tools/smoke_test.gd -- attack runs=200
 ## Policies: "smart" guards when an enemy telegraphs and salves when Drained and low;
-## "attack" only ever attacks (gets Drained, leans on the tutorial's mercy).
+## "attack" only ever attacks: it always gets Drained, and in the tutorial mercy (1 HP floor)
+## catches it now and then -- the summary counts how often.
 ## Options: seed=N (first seed, default 1); runs=N (battles on seeds N, N+1, ..., then a balance
 ## summary); troop=host,host (enemy ids); log=1/0 (every line of every battle, default: on for a
 ## single battle). The same seed replays the same fight, so a refactor can be diffed line by line.
@@ -150,9 +151,11 @@ func _summary(rows: Array) -> void:
 	var won := rows.filter(func(r) -> bool: return r["won"]).size()
 	print("=== SUMMARY: %s vs %s, %d battles (seeds %d-%d), min/avg/max" % [
 		policy, ",".join(troop), rows.size(), first_seed, first_seed + rows.size() - 1])
+	var floored := rows.filter(func(r) -> bool: return r["lowest"] <= 1).size()
 	print("won %d/%d | turns %s | hp left %s | lowest hp %s | most drained %s | salves used %s" % [
 		won, rows.size(), _spread(rows, "turns"), _spread(rows, "hp"), _spread(rows, "lowest"),
 		_spread(rows, "drained"), _spread(rows, "salves")])
+	print("down to 1 HP (mercy's floor, if on) in %d/%d" % [floored, rows.size()])
 	print("frames per battle %s" % _spread(rows, "frames"))
 
 

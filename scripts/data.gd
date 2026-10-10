@@ -73,8 +73,10 @@ const SKILLS := {
 }
 
 # States: id -> stacks on a battler. "skip_turn" states eat the holder's next action and wear off
-# at the end of that round. "tick_hp"/"tick_mp" are lost per stack at the end of every round.
+# at the end of that round. "damage_taken" multiplies every hit on the holder, and its "hit" line
+# replaces the skill's own. "tick_hp"/"tick_mp" are lost per stack at the end of every round.
 # "atk_per_stack" changes attack (x(1 + n * value)). "ends_with_battle" states don't carry over.
+# An enemy can say any of a state's lines its own way ("state_text" in ENEMIES).
 const STATES := {
 	"drained": {
 		"label": "DRAINED x{stacks}",
@@ -90,7 +92,9 @@ const STATES := {
 	"stunned": {
 		"label": "STUNNED",
 		"skip_turn": true,
+		"damage_taken": 2.0,  # answering a telegraph pays off in speed, not just HP
 		"apply": ["{Name} reels, stunned."],
+		"hit": "{Target} is wide open! It takes {dmg}.",
 		"skip": ["{Name} is still reeling."],
 		"ends_with_battle": true,
 	},
@@ -110,6 +114,7 @@ const ITEMS := {
 # (normal.png, telegraph.png, stunned.png, hurt.png). "ai" picks a behaviour in
 # scripts/battle/enemy_ai.gd. "intro" opens the fight unless the caller brings its own,
 # "death" is said when it falls. "mercy": the hero can't drop below 1 HP in a fight with it.
+# "state_text": {state: {key: lines}} says a state's lines its own way.
 const ENEMIES := {
 	"host": {
 		"name": "the Host",
@@ -128,6 +133,14 @@ const ENEMIES := {
 			"Something wet rides his shoulders.",
 			{"say": "{hero} says nothing. He nods, once.", "pop": "..."},
 		],
+		# The guarded latch tears the sucker out: the frog hangs dazed, the man is himself again.
+		"state_text": {
+			"stunned": {
+				"apply": ["{Name} reels, stunned.", "For a moment, the man's eyes clear."],
+				"hit": "The frog's belly is bare! It takes {dmg}.",
+				"skip": ["The frog crawls back onto his skull."],
+			},
+		},
 		"death": ["The frog peels away, spent. The man falls.", "He was already gone."],
 	},
 }
