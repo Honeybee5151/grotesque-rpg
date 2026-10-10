@@ -22,6 +22,7 @@ var people := {}              # Vector2i -> actor standing on (or stepping into)
 var examine := {}             # Vector2i -> Callable: things the hero can face and press Z on
 var triggers := {}            # Vector2i -> Callable: fires when the hero finishes a step there
 var spawns := {}              # name -> [cell, facing]
+var landmarks := {}           # point-at id -> Node2D or Vector2 (map pixels): the hero turns to it
 var camera: Camera2D
 var hero_glow := 0.0          # > 0: a faint light around the hero (dark maps)
 var _glow := -1
@@ -105,7 +106,7 @@ func spawn_player(spawn: String) -> void:
 	player = Player.new()
 	player.map = self
 	player.world = world
-	player.setup(load(HERO_SHEET), 9)
+	player.setup(load(HERO_SHEET), 10)
 	things.add_child(player)
 	var sp: Array = spawns.get(spawn, [Vector2i.ZERO, Vector2i.DOWN])
 	player.place(sp[0])
@@ -176,6 +177,14 @@ func shake(px: float, sec: float) -> void:
 		tw.tween_property(camera, "offset", Vector2(randf_range(-px, px), -8.0 + randf_range(-px, px)).round(), 0.04)
 	tw.tween_property(camera, "offset", Vector2(0, -8), 0.04)
 	await tw.finished
+
+
+## Where a point-at target is, or null if it has no place on this map.
+func landmark(id: String) -> Variant:
+	var l: Variant = landmarks.get(id)
+	if l is Node2D:
+		return l.position if is_instance_valid(l) else null
+	return l
 
 
 ## Pixel centre of a cell, for lights.

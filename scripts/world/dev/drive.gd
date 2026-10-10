@@ -1,10 +1,12 @@
 extends SceneTree
 ## Dev driver for the overworld: loads the world, plays a script of key presses and waits, and saves
 ## screenshots. Run with a window (not --headless) to get pictures:
-##   godot --path . --script res://scripts/world/dev/drive.gd -- OUT_DIR "R*6 U*4 shot:a Z wait:1 ..."
+##   godot --path . --script res://scripts/world/dev/drive.gd -- OUT_DIR "R*6 U*4 shot:a Z wait:1 ..." [START]
+## START (optional) jumps in: "map:spawn:flag,flag,+item,..." e.g. "well_cave:shaft:odo_down,rope_cut".
 ## Steps: <Key>*n holds a direction for n tiles (U D L R), Z / X press a button, wait:<sec>,
 ## shot:<name> saves OUT_DIR/<name>.png, pick:<n> moves a menu cursor n down and confirms,
-## until:<text> waits until the text box shows text containing <text> (max 20 s).
+## until:<text> waits until the text box shows text containing <text> (max 20 s),
+## mash:<n> presses Z n times, a third of a second apart (to play through a battle).
 
 var world: Node
 var out_dir := ""
@@ -15,6 +17,7 @@ var _hold := ""
 var _hold_left := 0.0
 var _until := ""
 var _until_t := 0.0
+var _mash := 0
 
 const DIRS := {"U": KEY_UP, "D": KEY_DOWN, "L": KEY_LEFT, "R": KEY_RIGHT}
 
@@ -24,6 +27,16 @@ func _initialize() -> void:
 	out_dir = args[0] if args.size() > 0 else "user://"
 	steps = (args[1] if args.size() > 1 else "wait:2 shot:start").split(" ", false)
 	world = load("res://scenes/world/world.tscn").instantiate()
+	if args.size() > 2:
+		var start := args[2].split(":")
+		world.start_map = start[0]
+		world.start_spawn = start[1]
+		if start.size() > 2:
+			for f in start[2].split(",", false):
+				if f.begins_with("+"):
+					world.items[f.substr(1)] = f.substr(1).capitalize()
+				else:
+					world.flags[f] = true
 	root.add_child(world)
 
 
@@ -46,6 +59,11 @@ func _process(delta: float) -> bool:
 	if _wait > 0.0:
 		_wait -= delta
 		return false
+	if _mash > 0:
+		_mash -= 1
+		_tap(KEY_Z)
+		_wait = 0.33
+		return false
 	if _i >= steps.size():
 		print("drive: done")
 		return true
@@ -65,6 +83,8 @@ func _process(delta: float) -> bool:
 			_tap(KEY_DOWN)
 		_tap(KEY_Z)
 		_wait = 0.1
+	elif s.begins_with("mash:"):
+		_mash = int(s.substr(5))
 	elif s == "Z" or s == "X":
 		_tap(KEY_Z if s == "Z" else KEY_X)
 		_wait = 0.1

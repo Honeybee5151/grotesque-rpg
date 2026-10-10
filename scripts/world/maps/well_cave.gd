@@ -22,7 +22,7 @@ const LAYOUT := [
 
 const SHAFT := Vector2i(3, 2)
 const LANTERN := Vector2i(13, 9)
-const HOST_START := Vector2i(22, 12)
+const HOST_START := Vector2i(19, 12)
 
 var lantern: Sprite2D
 var host: Actor

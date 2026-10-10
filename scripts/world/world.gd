@@ -147,14 +147,22 @@ func act(answer: Dictionary, what := "") -> void:
 		cap = cap % what
 	sfx.play("gesture")
 	box.caption(cap, 0.8)
+	var hero: Node2D = map.player
+	var was: Vector2i = hero.facing
+	var at: String = answer.get("at", "")
+	if at != "" and at != "self":
+		var where: Variant = map.landmark(at)
+		if where != null:
+			hero.face_toward_pos(where)
 	var icon: Sprite2D = null
 	if answer["g"] == "show":
-		icon = _float(map.player, "res://art/world/item_%s.png" % answer["item"])
+		icon = _float(hero, "res://art/world/item_%s.png" % answer["item"])
 	elif answer["g"] == "silent":
-		icon = _float(map.player, "res://art/world/bubble.png")
-	await map.player.gesture(answer["g"])
+		icon = _float(hero, "res://art/world/bubble.png")
+	await hero.gesture(answer["g"], at)
 	if icon != null:
 		icon.queue_free()
+	hero.face(was)
 	await get_tree().create_timer(0.15).timeout
 
 

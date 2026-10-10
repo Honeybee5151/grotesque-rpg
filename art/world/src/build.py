@@ -23,7 +23,7 @@ def save(canvas, name):
 
 if __name__ == "__main__":
     save(fen.atlas(), "fen_tiles.png")
-    save(sheet(people.hero(), 9), "hero.png")
+    save(sheet(people.hero(), 10), "hero.png")
     save(sheet(people.odo(), 3), "odo.png")
     save(sheet(people.moth(), 3), "moth.png")
     save(sheet(people.host(), 2), "host_walk.png")

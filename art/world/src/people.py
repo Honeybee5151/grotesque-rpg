@@ -3,7 +3,7 @@
 Sheet layout (keep in sync with scripts/world/actor.gd): one row per facing - down, up, left, right -
 and one column per pose. Every frame is FW x FH with the feet on the bottom row.
     0 stand, 1 walk A, 2 walk B, 3 nod, 4 shake (head one way), 5 shake (the other way),
-    6 shrug, 7 point, 8 show (both hands raised)
+    6 shrug, 7 point (the way he faces), 8 show (both hands raised), 9 point at himself
 """
 from pix import Canvas
 
@@ -152,7 +152,57 @@ def _walk(body, facing, phase, legs):
     return b
 
 
-def figure(rows_by_facing, pal, neck=9, legs=LEG_ROWS):
+# The hero's gesture arms: (clear, paint) per facing, in body coordinates. `clear` removes the
+# hanging arm, `paint` lists (x, y, palette key). Right facing mirrors left.
+ARMS = {
+    "shrug": {
+        "down": ([(2, 15), (2, 16), (2, 17), (13, 15), (13, 16), (13, 17), (2, 14), (13, 14)],
+                 [(1, 12, "C"), (1, 13, "C"), (0, 11, "1"), (0, 12, "2"),
+                  (14, 12, "k"), (14, 13, "k"), (15, 11, "2"), (15, 12, "3")]),
+        "up": ([(2, 15), (2, 16), (2, 17), (13, 15), (13, 16), (13, 17), (2, 14), (13, 14)],
+               [(1, 12, "C"), (1, 13, "C"), (0, 11, "1"), (0, 12, "2"),
+                (14, 12, "k"), (14, 13, "k"), (15, 11, "2"), (15, 12, "3")]),
+        "left": ([(6, 16), (6, 17)], [(3, 13, "C"), (4, 13, "c"), (2, 12, "1"), (2, 13, "2"), (11, 12, "k"), (12, 11, "3")]),
+    },
+    "point": {
+        "down": ([(2, 15), (2, 16), (2, 17), (2, 14)],
+                 [(1, 13, "C"), (1, 14, "C"), (0, 15, "1"), (0, 16, "2")]),
+        "up": ([(13, 15), (13, 16), (13, 17), (13, 14)],
+               [(14, 11, "k"), (14, 10, "k"), (14, 9, "3"), (14, 8, "2")]),
+        "left": ([(6, 16), (6, 17)], [(4, 12, "C"), (3, 12, "C"), (2, 12, "c"), (1, 12, "1"), (0, 12, "1"), (1, 13, "2")]),
+    },
+    "show": {
+        "down": ([(2, 14), (2, 15), (2, 16), (2, 17), (13, 14), (13, 15), (13, 16), (13, 17)],
+                 [(2, 9, "C"), (2, 8, "C"), (2, 7, "1"), (2, 6, "1"), (13, 9, "k"), (13, 8, "k"), (13, 7, "2"), (13, 6, "3")]),
+        "up": ([(2, 14), (2, 15), (2, 16), (2, 17), (13, 14), (13, 15), (13, 16), (13, 17)],
+               [(2, 9, "C"), (2, 8, "C"), (2, 7, "1"), (2, 6, "1"), (13, 9, "k"), (13, 8, "k"), (13, 7, "2"), (13, 6, "3")]),
+        "left": ([(6, 16), (6, 17)], [(4, 10, "C"), (4, 9, "C"), (3, 8, "1"), (3, 7, "1"), (5, 9, "c")]),
+    },
+    "self": {
+        "down": ([(13, 15), (13, 16), (13, 17)], [(12, 13, "k"), (11, 13, "3"), (10, 12, "2"), (9, 12, "1")]),
+        "up": ([(13, 15), (13, 16), (13, 17)], [(12, 13, "k"), (12, 12, "k")]),
+        "left": ([(6, 16), (6, 17)], [(6, 13, "c"), (6, 12, "1"), (5, 12, "2")]),
+    },
+}
+
+
+def _arms(body, pose, facing, pal):
+    b = body.copy()
+    f = "left" if facing == "right" else facing
+    clear, paint = ARMS[pose][f]
+    flip = facing == "right"
+    for x, y in clear:
+        if flip:
+            x = FW - 1 - x
+        b.a[y, x] = 0
+    for x, y, k in paint:
+        if flip:
+            x = FW - 1 - x
+        b.px(x, y, pal[k])
+    return b
+
+
+def figure(rows_by_facing, pal, neck=9, legs=LEG_ROWS, arms=False):
     """All poses for one character: dict facing -> list of canvases (columns of the sheet)."""
     art = {f: _art(rows_by_facing[f], pal) for f in ("down", "up", "left")}
     art["right"] = art["left"].flip()
@@ -178,14 +228,18 @@ def figure(rows_by_facing, pal, neck=9, legs=LEG_ROWS):
             compose(b, h, 0, 1),           # 3 nod
             compose(b, shake[0]),          # 4 shake one way
             compose(b, shake[1]),          # 5 shake the other way
-            compose(b, h),                 # 6 shrug (arms drawn below)
-            compose(b, h),                 # 7 point
-            compose(b, h),                 # 8 show
         ]
+        if arms:
+            frames[f] += [
+                compose(_arms(b, "shrug", f, pal), h, 0, 1),   # 6 shrug: head sinks between the shoulders
+                compose(_arms(b, "point", f, pal), h),         # 7 point
+                compose(_arms(b, "show", f, pal), h),          # 8 show
+                compose(_arms(b, "self", f, pal), h, 0, 1),    # 9 point at himself, head bowed
+            ]
     return frames
 
 
-def finish(frames, poses=9):
+def finish(frames, poses=10):
     out = []
     for f in ("down", "up", "left", "right"):
         for c in frames[f][:poses]:
@@ -194,7 +248,7 @@ def finish(frames, poses=9):
 
 
 def hero():
-    return finish(figure({"down": HERO_DOWN, "up": HERO_UP, "left": HERO_LEFT}, HERO))
+    return finish(figure({"down": HERO_DOWN, "up": HERO_UP, "left": HERO_LEFT}, HERO, arms=True))
 
 
 # Odo, the well-keeper. The same man the Host is drawn from (docs/bestiary.md): lanky, long arms,

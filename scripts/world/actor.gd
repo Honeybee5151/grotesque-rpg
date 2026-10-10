@@ -7,7 +7,7 @@ signal arrived
 
 const TILE := 16
 const ROW := {Vector2i.DOWN: 0, Vector2i.UP: 1, Vector2i.LEFT: 2, Vector2i.RIGHT: 3}
-enum Pose { STAND, WALK_A, WALK_B, NOD, SHAKE_A, SHAKE_B, SHRUG, POINT, SHOW }
+enum Pose { STAND, WALK_A, WALK_B, NOD, SHAKE_A, SHAKE_B, SHRUG, POINT, SHOW, POINT_SELF }
 
 var map: Node                 # the map this actor stands on
 var cell := Vector2i.ZERO
@@ -53,7 +53,11 @@ func face(d: Vector2i) -> void:
 
 
 func face_toward(other: Node2D) -> void:
-	var d: Vector2 = other.position - position
+	face_toward_pos(other.position)
+
+
+func face_toward_pos(p: Vector2) -> void:
+	var d: Vector2 = p - position
 	if absf(d.x) > absf(d.y):
 		face(Vector2i.RIGHT if d.x > 0 else Vector2i.LEFT)
 	else:
@@ -84,8 +88,9 @@ func walk(path: Array) -> void:
 		await arrived
 
 
-## Acts out a gesture: "nod", "shake", "shrug", "point", "show" or "silent".
-func gesture(g: String) -> void:
+## Acts out a gesture: "nod", "shake", "shrug", "point", "show" or "silent". Pointing at "self"
+## puts a hand on his chest instead.
+func gesture(g: String, at := "") -> void:
 	match g:
 		"nod":
 			for i in 2:
@@ -98,7 +103,7 @@ func gesture(g: String) -> void:
 		"shrug":
 			await _hold(Pose.SHRUG, 0.55)
 		"point":
-			await _hold(Pose.POINT, 0.6)
+			await _hold(Pose.POINT_SELF if at == "self" else Pose.POINT, 0.7)
 		"show":
 			await _hold(Pose.SHOW, 0.7)
 		_:
