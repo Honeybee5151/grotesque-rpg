@@ -4,12 +4,14 @@
     import            godot --headless --import
     scripts           every .gd file parses (tools/check_scripts.gd), even ones nothing runs yet
     boot              boot -> title screen, headless, for a moment
+    play              press Play on the title (tools/check_play.gd): a real scene must open
     autoplay smart    tools/smoke_test.gd -- smart
     autoplay attack   tools/smoke_test.gd -- attack
     autoplay smart troop=host,host   two enemies: the target menu and multi-enemy battles
     autoplay skills   the Skill submenu, spending MP
-    export            the game.pck players get (export filters, remaps), then boot and the
-                      battle run from it - catches files that work here but don't ship
+    world             scripts/world/dev/world_test.gd: plays the prologue headless, both endings
+    export            the game.pck players get (export filters, remaps), then boot, the battle
+                      and the world run from it - catches files that work here but don't ship
     updater           tools/update_test.sh through Git Bash (only with -Updater)
 
 .DESCRIPTION
@@ -148,11 +150,18 @@ $run = Invoke-Native $Godot @('--headless', '--path', $Root, '--script', 'res://
 Report 'scripts' $run '^=== SCRIPTS:' '^=== SCRIPTS:'
 if ($Stop) { Skip 'boot' } else {
     Report 'boot' (Invoke-Native $Godot @('--headless', '--path', $Root, '--quit-after', '120') 60)
+    $run = Invoke-Native $Godot @('--headless', '--path', $Root, '--script', 'res://tools/check_play.gd') 60
+    Report 'play' $run '^=== PLAY: res://' '^=== PLAY:'
 }
 foreach ($p in $Policies) {
     if ($Stop) { Skip "autoplay $p"; continue }
     $run = Invoke-Native $Godot (@('--headless', '--path', $Root, '--script', 'res://tools/smoke_test.gd', '--') + ($p -split ' ')) 120
     Report "autoplay $p" $run '^=== RESULT:' '^=== RESULT:'
+}
+# world owns the playthrough; it prints "=== WORLD: N scenarios, 0 failed" and exits 1 on a miss.
+if ($Stop) { Skip 'world' } else {
+    $run = Invoke-Native $Godot @('--headless', '--path', $Root, '--script', 'res://scripts/world/dev/world_test.gd') 300
+    Report 'world' $run '^=== WORLD: \d+ scenarios, 0 failed' '^=== WORLD: \d+ scenarios'
 }
 # The exported game: only resources (plus release.cfg) ship, minus tools/; run it from the pack in an
 # empty folder so nothing from the project folder can stand in for a missing file.
@@ -165,6 +174,7 @@ if ($Stop) { Skip 'export' } else {
         if (Test-Path $pck) {
             Report 'export: boot' (Invoke-Native $Godot @('--headless', '--main-pack', $pck, '--quit-after', '120') 60 $tmp)
             Report 'export: battle' (Invoke-Native $Godot @('--headless', '--main-pack', $pck, 'res://main.tscn', '--quit-after', '300') 60 $tmp)
+            Report 'export: world' (Invoke-Native $Godot @('--headless', '--main-pack', $pck, 'res://scenes/world/world.tscn', '--quit-after', '600') 60 $tmp)
         }
     } finally {
         Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
