@@ -1,0 +1,17 @@
+[remap]
+
+importer="font_data_bmfont"
+type="FontFile"
+uid="uid://bb0uoovrxujy3"
+path="res://.godot/imported/grotesk_crit.fnt-b3e5cda742b3a18de0f4bdfcc9bd82c9.fontdata"
+
+[deps]
+
+source_file="res://art/fonts/grotesk_crit.fnt"
+dest_files=["res://.godot/imported/grotesk_crit.fnt-b3e5cda742b3a18de0f4bdfcc9bd82c9.fontdata"]
+
+[params]
+
+fallbacks=[]
+compress=true
+scaling_mode=0
