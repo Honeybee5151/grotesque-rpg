@@ -27,6 +27,9 @@ var can_run := false
 var turn := 0
 var outcome := ""             # "won", "lost" or "fled" once it's over
 var flags: Dictionary = {}    # story flags raised in the fight (an enemy's "death_when")
+var _acts: Array = []         # this round's actions in turn order (for chorus moves)
+var _chorus_said: Dictionary = {}  # chorus skills whose lines were said this round
+var _states_landed: Dictionary = {}  # "states_once" skills that already landed their states
 var view: BattleView
 
 
@@ -86,6 +89,9 @@ func _round() -> void:
 	for i in acts.size():
 		acts[i]["order"] = i
 	acts.sort_custom(_sooner)
+	_acts = acts
+	_chorus_said.clear()
+	_states_landed.clear()
 	for act in acts:
 		if act["user"].alive():
 			await _perform(act)
@@ -282,20 +288,32 @@ func _use_skill(user: Battler, id: String, target: Battler) -> void:
 		return
 	user.mp -= cost
 	view.refresh_status(hero)
-	for line in sk.get("lines", []):
-		await _say(line, vars)
+	var lines: Array = sk.get("lines", [])
+	var movers: Array = [user]
+	if sk.get("chorus", false):
+		movers = _chorus(id)
+		if _chorus_said.has(id):
+			lines = []
+		elif movers.size() == 1:
+			lines = sk.get("lines_alone", lines)
+		_chorus_said[id] = true
+	for line in lines:
+		await _say(line, vars, movers)
 	if sk.get("guard", false):
 		user.guarding = true
 	if sk.has("power") or sk.has("dmg"):
-		await _strike(user, target, sk, vars)
+		await _strike(user, target, id, vars)
 	if sk.has("heal"):
 		var healed := _heal(target, int(sk["heal"]))
 		await _say(_fill(Data.TEXT["heal"], {"heal": healed}))
+	if sk.has("steal_mp"):
+		await _steal(user, target, sk, vars)
 	user.telegraphing = sk.get("telegraph", false)
 	_update_pose(user)
 
 
-func _strike(user: Battler, target: Battler, sk: Dictionary, vars: Dictionary) -> void:
+func _strike(user: Battler, target: Battler, id: String, vars: Dictionary) -> void:
+	var sk: Dictionary = Data.SKILLS[id]
 	if target.guarding and sk.get("guard_blocks", false):
 		for line in sk.get("blocked", []):
 			await _say(line, vars)
@@ -328,6 +346,14 @@ func _strike(user: Battler, target: Battler, sk: Dictionary, vars: Dictionary) -
 	vars["dmg"] = _hurt(target, d, crit or exposed)
 	if line != "":
 		await _say(_fill(line, vars) + (Data.TEXT["guarded"] if guarded else ""))
+	var brk: Dictionary = target.data.get("break", {})
+	if target.telegraphing and target.alive() and id in brk.get("by", []):
+		target.telegraphing = false
+		await _add_state(target, brk.get("state", "stunned"), 1)
+	if sk.get("states_once", false):
+		if _states_landed.has(id):
+			return
+		_states_landed[id] = true
 	var onto_target: Dictionary = sk.get("states", {})
 	for s in onto_target:
 		await _add_state(target, s, onto_target[s])
@@ -366,6 +392,23 @@ func _use_item(user: Battler, id: String) -> void:
 		parts.append(Data.STATES[s]["cure"])
 	if not parts.is_empty():
 		await _say(" ".join(parts))
+
+
+# Drinks MP (or HP when there's none) out of the target and heals the user by what it took.
+func _steal(user: Battler, target: Battler, sk: Dictionary, vars: Dictionary) -> void:
+	var mp := mini(target.mp, int(sk["steal_mp"]))
+	if mp > 0:
+		target.mp -= mp
+		view.refresh_status(hero)
+		if target.is_hero:
+			view.popup_hero("-%d" % mp, Color("#5a9bff"))
+		vars["mp"] = mp
+		vars["heal"] = _heal(user, mp)
+		await _say(_fill(sk["steal_mp_hit"], vars))
+	elif sk.has("steal_hp"):
+		vars["hp"] = _hurt(target, int(sk["steal_hp"]))
+		vars["heal"] = _heal(user, vars["hp"])
+		await _say(_fill(sk["steal_hp_hit"], vars))
 
 
 # Heals up to max HP and shows it; returns how much it healed.
@@ -442,22 +485,35 @@ func _update_pose(b: Battler) -> void:
 # Text
 # ======================================================================================
 
+# Everyone standing who uses this chorus skill this round, so the line moves them all at once.
+func _chorus(id: String) -> Array:
+	var movers: Array = []
+	for act in _acts:
+		var u: Battler = act["user"]
+		if act.get("skill", "") == id and u.alive() and not u.skips_turn():
+			movers.append(u)
+	return movers
+
+
 # Says one line of battle text (see the format at the top of scripts/data.gd). Cues fire as
-# the line starts; pose/flash/shake act on the enemy using the skill or holding the state.
-func _say(line: Variant, vars: Dictionary = {}) -> void:
+# the line starts; pose/flash/shake act on the enemy using the skill or holding the state (or on
+# every mover of a chorus).
+func _say(line: Variant, vars: Dictionary = {}, movers: Array = []) -> void:
 	var cue: Dictionary = line if line is Dictionary else {"say": line}
-	var who: Variant = vars.get("user", vars.get("name"))
+	if movers.is_empty():
+		movers = [vars.get("user", vars.get("name"))]
 	if cue.has("sfx"):
 		view.sfx(cue["sfx"])
 	if cue.has("pop"):
 		view.hero_gestures(cue["pop"])
-	if who is Battler and not who.is_hero and not who.gone:
-		if cue.has("pose"):
-			view.set_pose(who, cue["pose"])
-		if cue.has("flash"):
-			view.flash_enemy(who, Color(cue["flash"]))
-		if cue.has("shake"):
-			view.shake_enemy(who)
+	for who in movers:
+		if who is Battler and not who.is_hero and not who.gone:
+			if cue.has("pose"):
+				view.set_pose(who, cue["pose"])
+			if cue.has("flash"):
+				view.flash_enemy(who, Color(cue["flash"]))
+			if cue.has("shake"):
+				view.shake_enemy(who)
 	await view.say(_fill(cue["say"], vars), cue.get("hold", BattleView.HOLD))
 
 

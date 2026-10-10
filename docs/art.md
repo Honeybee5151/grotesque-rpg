@@ -64,6 +64,15 @@ Lessons from redrawing the Host. Read before drawing anything.
   `normal_3.png`; a member takes the one for its formation slot, else `normal.png`), and keep a shared
   move's telegraph identical on purpose: a pack snapping into one pose reads as unison (Penny Leeches).
 - Commit each sprite's `.import` with it: every `.import` is tracked, so UIDs match across checkouts.
+
+## Battle backdrops
+- `art/battle/<bg>.png`, 320x180 at 1x; a battle with `bg` other than `"cave"` loads it. The windows
+  cover y >= 124 and enemies stand on y = 122, so that's the ground (or the waterline).
+- Restrained like the cave: dark, dithered (ordered 4x4), low contrast, a vignette, the centre calm
+  where the monster stands. At most one warm accent (the Mere's lantern). The monster carries the
+  picture; the backdrop only says where you are.
+- A monster that lives in a place can lean on its backdrop: Old Iron has no water of its own any more,
+  just foam where it breaks the Mere's surface. First: `mere` (`tools/art/mere_bg.py`, `--preview`).
 - Make poses parameters of one sculpt (head/limb frames, a lift, named arm variants), not separate
   drawings - see `tools/art/host.py`. The design and the light stay consistent across poses.
 - Show Miles 2-3 options as one labelled sheet before polishing one. Concepts and sheets go in

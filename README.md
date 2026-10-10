@@ -35,9 +35,16 @@ Players download the zip once; after that the game updates itself.
 - `game.pck` carries all scripts, scenes and data, so content/logic updates never need a new download.
   A **new Godot version** can't be delivered this way — that needs players to grab a fresh zip. If you
   change engine version, change it in `release.yml` too.
+- Nor can **project settings**: Godot reads them once, from the exe, so an install keeps the
+  `project.godot` of the build it was downloaded as. `scripts/display.gd` therefore applies the ones that
+  matter (320x180 viewport stretch, pixel snapping, the theme's pixel font) from code on every launch;
+  without it, v0.1.0 installs that updated to v0.3.0 showed Godot's default 16px font. New autoloads or
+  input actions in `project.godot` won't exist in updated installs either: give them a code fallback.
 - Inside the editor the updater is off. `tools/update_test.sh` tests the whole pipeline against a fake
   local release (`GODOT=/path/to/godot tools/update_test.sh`; on Windows `tools\check.ps1 -Updater`
-  runs it through Git Bash).
+  runs it through Git Bash), and with `--real` downloads, verifies and mounts the live latest release.
+  It runs in a copy named "Grotesque RPG (update test)", so it never touches an installed game's
+  user folder (same project name = same folder, including its staged update).
 
 ## The agent team (Windows)
 Four Claude Code sessions (Opus 5.5, max effort) build the game in parallel, one PowerShell window
