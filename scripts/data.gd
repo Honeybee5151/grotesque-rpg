@@ -36,7 +36,9 @@ const RULES := {
 # nothing, says the "blocked" lines and puts "blocked_user_states" on the user. "chorus": when a
 # pack uses it in the same round, its lines are said once and their cues move them all together
 # ("lines_alone" instead when only one is left). "states_once": its states land once a round,
-# from the first hit, however many of the pack bite.
+# from the first hit, however many of the pack bite. "steal_mp": takes up to that much MP and
+# heals the user by what it took ("steal_hp" instead when there's none to take); not damage, so
+# Guard doesn't touch it.
 const SKILLS := {
 	# --- the hero ---
 	"attack": {
@@ -94,6 +96,27 @@ const SKILLS := {
 		"blocked_user_states": {"stunned": 1},
 	},
 
+	# --- the Mouther: claw -> inhale (telegraph, breakable) -> drink the hero's breath ---
+	"claw": {
+		"lines": ["{User} lurches forward, clawing."],
+		"dmg": [5, 8],
+		"hit": "{Target} takes {dmg} damage.",
+	},
+	"inhale": {
+		"telegraph": true,
+		"lines": [
+			{"say": "{User} sucks in a long, silent breath.", "hold": 0.35,
+				"pose": "telegraph", "sfx": "coil"},
+			"Its scarf streams into its mouth.",
+		],
+	},
+	"drink_breath": {
+		"lines": [{"say": "It drinks the breath out of {target}!", "hold": 0.4, "sfx": "drain"}],
+		"steal_mp": 10,
+		"steal_hp": 8,
+		"steal_mp_hit": "{Target} loses {mp} MP. It swells.",
+		"steal_hp_hit": "No breath left. It drinks {hp} HP.",
+	},
 	# --- Penny Leeches: nip, nip... then all rear up as one (telegraph) and all latch at once ---
 	"nip": {
 		"dmg": [1, 3],
@@ -158,7 +181,9 @@ const ITEMS := {
 # (normal.png, telegraph.png, stunned.png, hurt.png). "ai" picks a behaviour in
 # scripts/battle/enemy_ai.gd. "intro" opens the fight unless the caller brings its own,
 # "death" is said when it falls; "death_when": {state: {flag, lines}} replaces it when it falls
-# holding that state, and puts the flag in the battle's result. "mercy": the hero can't drop below
+# holding that state, and puts the flag in the battle's result. "break": {"by": [skills],
+# "state": state} -- one of those skills landing while it telegraphs breaks the telegraph and puts
+# the state on it (default "stunned"), so the big move is lost. "mercy": the hero can't drop below
 # 1 HP in a fight with it. "state_text": {state: {key: lines}} says a state's lines its own way.
 const ENEMIES := {
 	"host": {
@@ -196,6 +221,26 @@ const ENEMIES := {
 				"lines": ["The frog peels away, spent. The man falls.", "He's still breathing."],
 			},
 		},
+	},
+	# A bog body on the drowned boardwalk. Teaches Crush: break the inhale before it drinks your MP,
+	# and spend MP rather than hoard it. Guard doesn't help against the drink.
+	"mouther": {
+		"name": "the Mouther",
+		"sprite": "mouther",
+		"max_hp": 60,
+		"def": 0,
+		"agi": 5,
+		"ai": "cycle",
+		"pattern": ["claw", "inhale", "drink_breath"],
+		"break": {"by": ["crush"], "state": "stunned"},
+		"state_text": {
+			"stunned": {
+				"apply": ["{Name} chokes on its own breath!"],
+				"skip": ["{Name} claws at its own throat."],
+			},
+		},
+		"intro": ["Something stands up out of the bog.", "Its jaw hangs open. No sound comes out."],
+		"death": ["{User} folds back into the peat.", "The jaw finally closes."],
 	},
 	# The fen's first ordinary fight, a pack of three: thin the pack before the chorus latches.
 	# 20 HP: a Crush (exactly 20) kills one outright, an Attack (at most 18) never does. Guard only

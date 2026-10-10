@@ -48,6 +48,12 @@ The battle ends when every enemy has fallen (won), the hero falls (lost), or he 
 - **Stunned:** loses its next action. Until the end of the round in which it lost that action, it
   takes double damage and shows its `stunned` pose. A pattern ("cycle") enemy then starts its
   pattern over.
+- **Breakable telegraphs** (`"break": {"by": ["crush"]}` on the enemy): one of those skills landing
+  while it telegraphs breaks the telegraph. It takes the stun (or the named state) and loses the
+  big move. The hero is faster than a breakable enemy, so he can always break it on the round
+  after the warning.
+- **Stealing** (`steal_mp`, `steal_hp`): drinks MP, or HP when there's none, and heals the user by
+  what it took. It isn't damage, so Guard doesn't touch it.
 
 ## Packs
 - Several enemies with the same "cycle" pattern stay in step, so a pack telegraphs together.
@@ -144,6 +150,28 @@ Balance (seeds 1-100, full HP, both Salves, Crush and Mend):
 The first tuning (each bite drained, bites 2-4) killed 38/100 of the attack-only and guard-habit
 players. A first ordinary fight should hurt the wrong answer, not end the game over it.
 
+### The Mouther (`mouther`): the drowned boardwalk
+A bog body with its jaw hanging far too low, a rotted scarf slipped off the mouth it once covered
+(lore: `docs/bestiary.md`). HP 60, DEF 0, AGI 5. No mercy.
+
+Pattern: **Claw** (5-8) → **Inhale** (telegraph: "The Mouther sucks in a long, silent breath.") →
+**Drink** (takes up to 10 MP and heals by that much; with no MP it drinks 8 HP).
+- Guard doesn't help; the drink isn't damage. A **Crush mid-inhale** breaks it: "The Mouther chokes
+  on its own breath!", the drink is lost, and its pattern starts over. Spending MP early also
+  works: there's nothing left to drink.
+- Death: "The Mouther folds back into the peat. / The jaw finally closes."
+- **The lesson:** Crush is also an interrupt, and MP you hoard can be taken.
+
+Balance (seeds 1-100, full HP):
+
+| play (autoplay policy) | wins | turns (min/avg/max) | HP left |
+|---|---|---|---|
+| Crush the inhale (`expert`) | 100/100 | 4 / 5.2 / 6 | 44-54 |
+| attack only, MP hoarded and drunk (`attack`) | 100/100 | 6 / 7.7 / 9 | 28-48 |
+| guard the drink, the tutorial's habit (`smart`) | 98/100 | 8 / 12.6 / 15 | 0-34 (avg 10) |
+
+At 70 HP and the same claws, the guard habit died 42/100.
+
 ## Starting a battle
 Agreed with world. The battle is a CanvasLayer (layer 10) that draws over the caller and keeps
 running while the caller is paused or disabled.
@@ -181,8 +209,10 @@ characters). `say()` measures each line and warns when one doesn't fit; the wide
 
 ## Testing
 - `godot --headless --path . --script res://tools/smoke_test.gd -- smart` plays one fight and prints
-  every line. Policies: `smart`, `skills`, `learner`, `save`, `thin`, `spam`, `attack` (what each
-  does is at the top of the file). The summary counts story flags too ("freed in N/100").
+  every line. Policies: `expert`, `smart`, `skills`, `learner`, `save`, `thin`, `spam`, `attack`
+  (what each does is at the top of the file). `expert` answers every enemy's telegraph its own way,
+  so it's the one to run against a new enemy first. The summary counts story flags too ("freed in
+  N/100").
   - `seed=N` replays a fight exactly.
   - `runs=N` prints a balance summary.
   - `troop=host,host` fights a group.
