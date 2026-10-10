@@ -49,7 +49,7 @@ func _build_scene() -> void:
 	title.text = "GROTESQUE\nRPG"
 	title.add_theme_color_override("font_outline_color", Color("#2a0818"))
 	title.add_theme_constant_override("outline_size", 3)
-	var sub := _label(Vector2(8, 40), Vector2(100, 12), 7, Color("#8a82b0"))
+	var sub := _label(Vector2(8, 50), Vector2(100, 12), 7, Color("#8a82b0"))
 	sub.text = "work in progress"
 	_version_label = _label(Vector2(240, 4), Vector2(76, 10), 7, Color("#6a6488"))
 	_version_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
