@@ -5,8 +5,8 @@ world of wonderfully grotesque monsters. **Miles** is the director: big creative
 
 ## Layout
 - `boot.tscn` -> `title.tscn` -> `main.tscn` (battle). Entry is `scripts/boot.gd` (mounts update packs).
-- `scripts/` - `main.gd` battle, `data.gd` hero/items/enemies, `title.gd`, `updater.gd`, `boot.gd`,
-  `sprite_factory.gd` (procedural cave background + interim sprites).
+- `scripts/` - `battle/` (the battle), `main.gd` (the tutorial fight), `data.gd` hero/items/enemies,
+  `title.gd`, `updater.gd`, `boot.gd`, `sprite_factory.gd` (procedural cave background).
 - `tools/` - `smoke_test.gd` (headless battle autoplay), `update_test.*` (updater end-to-end),
   `art/` (`sculpt.py` 3D-sculpt -> pixel-art renderer, `host_concepts.py`, `grid.py` coordinate viewer).
 - `art/` - PNG assets (`art/monsters/<id>/`, `art/world/`, `art/concepts/`).
