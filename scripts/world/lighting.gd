@@ -48,7 +48,8 @@ var _mat: ShaderMaterial
 var _tick := 0.0
 
 
-func setup(area: Vector2, ambient_level: float) -> void:
+## `top`: the colour of the brightest band - warm lamplight by default, cooler for a grey morning.
+func setup(area: Vector2, ambient_level: float, top := Color(1.0, 0.93, 0.80)) -> void:
 	size = area
 	ambient = ambient_level
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -59,6 +60,7 @@ func setup(area: Vector2, ambient_level: float) -> void:
 	_mat.shader = sh
 	material = _mat
 	_mat.set_shader_parameter("area", area)
+	_mat.set_shader_parameter("band3", Vector3(top.r, top.g, top.b))
 	_push()
 
 

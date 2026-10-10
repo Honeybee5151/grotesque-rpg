@@ -3,7 +3,8 @@ extends "res://scripts/world/map.gd"
 ## well, black water on every side. Odo goes down the well, the hero minds the rope, and comes back
 ## up alone to Moth's question. See docs/story.md.
 ## Flags: opened, met_odo, odo_down, rope_cut, host_done / odo_freed / odo_carried (set in the cave),
-## moth_read (how she read him: grief, hope, blame, cold - or, with Odo alive, truth, cold, two).
+## moth_read (how she read him: grief, hope, blame, cold - or, with Odo alive, truth, cold, two),
+## dawn (the morning after: the poster in his coat, Mend, the north road open), poster_name.
 
 const ODO := "Odo"
 const MOTH := "Moth"
@@ -48,16 +49,21 @@ var _odo_light := -1
 
 
 func build() -> void:
+	var dawn: bool = world.flags.get("dawn", false)
 	lay(PackedStringArray(LAYOUT), Tiles.FEN)
-	darken(0.42)
+	if dawn:
+		darken(1.0, Color(0.84, 0.87, 1.0))    # a grey morning: no dark at all, a cold cast
+	else:
+		darken(0.42)
 	spawns["start"] = [Vector2i(11, 18), Vector2i.RIGHT]
 	spawns["well"] = [Vector2i(15, 11), Vector2i.DOWN]
+	spawns["dawn"] = [Vector2i(16, 11), Vector2i.DOWN]
 	walls[Vector2i(15, 0)] = true
 
 	prop(load("res://art/world/house_odo.png"), Vector2i(6, 4), Vector2i(4, 2))
 	prop(load("res://art/world/house_shut.png"), Vector2i(19, 4), Vector2i(4, 2))
 	prop(load("res://art/world/house_dark.png"), Vector2i(20, 11), Vector2i(4, 2))
-	prop(load("res://art/world/well.png"), WELL, Vector2i(2, 2))
+	prop(load("res://art/world/well_boarded.png" if dawn else "res://art/world/well.png"), WELL, Vector2i(2, 2))
 	prop(load("res://art/world/lamp_post.png"), Vector2i(16, 15))
 	var reed_spots := [Vector2i(5, 6), Vector2i(4, 9), Vector2i(24, 3), Vector2i(26, 8), Vector2i(8, 14),
 		Vector2i(22, 14), Vector2i(11, 15), Vector2i(20, 15), Vector2i(6, 12), Vector2i(17, 2)]
@@ -80,7 +86,7 @@ func build() -> void:
 		await world.narrate("Odo's house. It smells of tallow and wet rope."))
 	examine[Vector2i(16, 15)] = func() -> void:
 		await world.narrate("A lamp on a pole, kept lit for boats that stopped coming.")
-	triggers[Vector2i(15, 1)] = north_fog
+	triggers[Vector2i(15, 1)] = leave_hollowell if dawn else north_fog
 
 	if not world.flags.get("odo_down", false):
 		odo = person("res://art/world/odo.png", ODO_SPOT, Vector2i.DOWN)
@@ -90,8 +96,12 @@ func build() -> void:
 			triggers[Vector2i(x, 13)] = odo_calls
 	var freed: bool = world.flags.get("odo_carried", false)
 	var waiting: bool = world.flags.get("host_done", false) and not world.flags.has("moth_read") and not freed
-	moth = person("res://art/world/moth.png", Vector2i(15, 12) if waiting else MOTH_DOOR,
-		Vector2i.UP if waiting else Vector2i.DOWN)
+	var moth_at := MOTH_DOOR
+	if waiting:
+		moth_at = Vector2i(15, 12)
+	elif dawn and world.flags.get("moth_read", "") != "blame":
+		moth_at = Vector2i(16, 12)
+	moth = person("res://art/world/moth.png", moth_at, Vector2i.UP if moth_at != MOTH_DOOR else Vector2i.DOWN)
 	if freed:
 		odo = person("res://art/world/odo_freed.png", Vector2i(14, 11), Vector2i.DOWN)
 		odo.talk = talk_freed_odo
@@ -111,6 +121,9 @@ func arrive(spawn: String) -> void:
 		world.box.close()
 		await world.reveal(1.2)
 		world.hint("Arrows walk.  Z talks, looks and answers.", 5.0)
+		return
+	if spawn == "dawn":
+		await dawn_scene()
 		return
 	await world.reveal()
 	if spawn == "well" and world.flags.get("host_done", false) and not world.flags.has("moth_read"):
@@ -243,6 +256,9 @@ func tug(text: String, times := 1) -> void:
 
 
 func look_well() -> void:
+	if world.flags.get("dawn", false):
+		await world.narrate("Somebody has laid boards over the well in the night, and a stone on top.")
+		return
 	if not world.flags.get("rope_cut", false):
 		await world.narrate("The well breathes out cold air. It smells of pennies.")
 		return
@@ -371,14 +387,13 @@ func moth_ends(read: String) -> void:
 			await world.narrate("By morning all of Hollowell knows what the drowned man did.")
 		"hope":
 			await world.narrate("She will wait by the well tonight, and every night after.")
-	await world.wait(0.6)
-	await world.cover(1.2)
-	await world.narrate("Hollowell. The end of the beginning.")
-	await world.narrate("(Thanks for playing this far. More of the fen is coming.)")
-	get_tree().change_scene_to_file("res://title.tscn")
+	await night()
 
 
 func moth_after() -> void:
+	if world.flags.get("dawn", false) and world.flags["moth_read"] != "blame":
+		await world.say(MOTH, "Go on. Before the fog comes back.", MOTH_PITCH)
+		return
 	match world.flags["moth_read"]:
 		"blame": await world.say(MOTH, "Don't come near me.", MOTH_PITCH)
 		"cold": await world.say(MOTH, "...", MOTH_PITCH)
@@ -450,16 +465,115 @@ func reunion_ends(read: String) -> void:
 	await world.caption("Odo looks at the drowned man, and nods. Once.", 2.4)
 	await world.narrate("Odo never says another word. He doesn't need to.")
 	await world.narrate("He and the drowned man understand each other fine.")
-	await world.wait(0.6)
-	await world.cover(1.2)
-	await world.narrate("Hollowell. The end of the beginning.")
-	await world.narrate("(Thanks for playing this far. More of the fen is coming.)")
-	get_tree().change_scene_to_file("res://title.tscn")
+	await night()
 
 
 func talk_freed_odo() -> void:
+	if world.flags.get("dawn", false):
+		await world.caption("Odo points up the north road, and nods.", 1.8)
+		await odo.bob()
+		return
 	await world.caption("Odo opens his mouth, and closes it again.", 1.8)
 	await odo.bob()
+
+
+# --------------------------------------------------------------------------------------------
+# The night, and the morning: the poster in his coat, and the road north.
+# --------------------------------------------------------------------------------------------
+
+func night() -> void:
+	await world.wait(0.6)
+	await world.cover(1.2)
+	var read: String = world.flags.get("moth_read", "")
+	if world.flags.get("odo_carried", false):
+		await world.narrate("Odo gives him the corner by the fire. Neither of them says a word all night.")
+	else:
+		match read:
+			"blame": await world.narrate("Nobody in Hollowell will have him under their roof. He sleeps by the well.")
+			"cold": await world.narrate("He sleeps by the well. Nobody brings him a blanket.")
+			"hope": await world.narrate("Moth calls down the well half the night. He sits with her until she sleeps.")
+			_: await world.narrate("He sleeps by the well. Nobody sends him away.")
+	world.flags["dawn"] = true
+	world.hero_state = {}          # a night's sleep: he wakes whole
+	world.go("hollowell", "dawn")
+
+
+func dawn_scene() -> void:
+	var read: String = world.flags.get("moth_read", "")
+	var freed: bool = world.flags.get("odo_carried", false)
+	await world.reveal(1.2)
+	await world.narrate("Morning. The fog has lifted off the fen.")
+	if read == "blame":
+		player.face(Vector2i.RIGHT)
+		await world.say("A voice", "You. Drowned man. Your coat dried on Odo's line.", 0.7)
+		await world.caption("A coat lands in the mud at his feet.", 1.8)
+		await world.say("A voice", "Take it and go.", 0.7)
+	else:
+		moth.face_toward(player)
+		player.face_toward(moth)
+		if freed:
+			await world.say(MOTH, "Da hung your coat by the fire all night. It's dry.", MOTH_PITCH)
+		else:
+			await world.say(MOTH, "Your coat was on Da's line all night. It's dry.", MOTH_PITCH)
+	await world.caption("Something stiff in the pocket, folded small.", 2.0)
+	world.box.close()
+	await world.picture("res://art/world/poster.png")
+	if read == "blame":
+		await world.narrate("There was a name written on it once. The fen washed it away.")
+		await world.say("A voice", "...And bind those hands before they fester. Moss, tight, like this.", 0.7)
+		await world.learn("mend", "He learns to bind a wound the fen way. (Mend: heals him in a fight.)")
+		world.hint("The road north is open.", 5.0)
+		return
+	if freed:
+		odo.face_toward(player)
+		await world.say(MOTH, "The Salt Guild! Da, look. The hunters!", MOTH_PITCH)
+		await world.caption("Odo looks at the poster a long time. Then up the north road.", 2.2)
+	else:
+		await world.say(MOTH, "The Salt Guild. Da used to tell me about them.", MOTH_PITCH)
+	await world.say(MOTH, "They go where nobody goes. They hunt the things that ride people.", MOTH_PITCH)
+	await world.say(MOTH, "There was a name on it. The fen ate it.", MOTH_PITCH)
+	await world.say(MOTH, "Was it yours?", MOTH_PITCH)
+	var points := {"self": "himself", "moth": "Moth"}
+	if freed:
+		points["odo"] = "Odo"
+	var a: Dictionary = await world.ask(points)
+	world.flags["poster_name"] = a["g"] if a["g"] != "point" else "point_" + String(a["at"])
+	match a["g"]:
+		"nod":
+			await world.say(MOTH, "Then you're going. To hunt them.", MOTH_PITCH)
+		"shake":
+			await world.say(MOTH, "Then whose? ...You don't know whose.", MOTH_PITCH)
+		"shrug":
+			await world.say(MOTH, "You don't even know your own name.", MOTH_PITCH)
+		"show":
+			await world.say(MOTH, "Da's lamp. ...No, keep it. It should see more than Hollowell.", MOTH_PITCH)
+		"point":
+			match a["at"]:
+				"self": await world.say(MOTH, "Yours. I knew it.", MOTH_PITCH)
+				"moth": await world.say(MOTH, "Mine? I can't be a hunter. I'm ten.", MOTH_PITCH)
+				_: await world.caption("Odo shakes his head, and taps the poster, and points at him.", 2.2)
+		_:
+			await world.say(MOTH, "...You don't know. Do you.", MOTH_PITCH)
+	await world.say(MOTH, "Your hands are all torn up. Hold still.", MOTH_PITCH)
+	await world.learn("mend", "She binds his hands the fen way: wet moss, pulled tight. (Mend: heals him in a fight.)")
+	if not world.items.has("lantern"):
+		if freed:
+			await world.caption("Odo presses his lantern into the drowned man's hands.", 2.2)
+		else:
+			await world.say(MOTH, "And take Da's lamp. It should go further than Hollowell.", MOTH_PITCH)
+		world.items["lantern"] = "Odo's lantern"
+	await world.say(MOTH, "The road north is open in the mornings. Go on, before the fog comes back.", MOTH_PITCH)
+	world.hint("The road north is open.", 5.0)
+
+
+func leave_hollowell() -> void:
+	await world.narrate("He takes the north road out of Hollowell, toward the end of the rains.")
+	if world.flags.get("moth_read", "") != "blame":
+		await world.say(MOTH, "DROWNED MAN! COME BACK A HUNTER!", MOTH_PITCH)
+	await world.cover(1.2)
+	await world.narrate("Hollowell. The end of the beginning.")
+	await world.narrate("Next: the road to the Salt Examination.")
+	get_tree().change_scene_to_file("res://title.tscn")
 
 
 func north_fog() -> void:
