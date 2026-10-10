@@ -246,6 +246,7 @@ func _settle() -> void:
 			for line in lines:
 				await _say(line, {"user": e})
 			e.states.clear()
+			await _take_with(e)
 	if enemies.all(func(e: Battler) -> bool: return not e.alive()):
 		for s in hero.states.keys():
 			if Data.STATES[s].get("ends_with_battle", false):
@@ -319,9 +320,15 @@ func _use_skill(user: Battler, id: String, target: Battler) -> void:
 		await _mend(target, sk)
 	if sk.has("steal_mp"):
 		await _steal(user, target, sk, vars)
+	if sk.has("summon"):
+		await _summon(user, sk["summon"])
 	user.telegraphing = sk.get("telegraph", false)
 	user.tele_pose = sk.get("pose", "telegraph")
 	_update_pose(user)
+	if sk.get("leaves", false) and user.alive():
+		user.hp = 0
+		user.gone = true
+		await view.leave_enemy(user)
 
 
 func _strike(user: Battler, target: Battler, id: String, vars: Dictionary) -> void:
@@ -410,6 +417,43 @@ func _mend(b: Battler, src: Dictionary) -> void:
 		parts.push_front(_fill(Data.TEXT["heal"], {"heal": healed}))
 	if not parts.is_empty():
 		await _say(" ".join(parts))
+
+
+# A newcomer joins mid-fight ("summon"): lettered by its kind, it acts from next round, and it may
+# arrive already telegraphing (a spawnling coiled to leap). No room left: the move fizzles.
+func _summon(user: Battler, id: String) -> void:
+	var data: Dictionary = Data.ENEMIES[id]
+	if not view.has_room(enemies, data.get("sprite", id)):
+		for line in Data.TEXT["no_room"]:
+			await _say(line, {"user": user})
+		return
+	var b: Battler = Battler.new().setup_enemy(id)
+	var kin := enemies.filter(func(e: Battler) -> bool: return e.id == id).size()
+	b.name += " " + String.chr(65 + kin)
+	b.telegraphing = data.get("arrives_telegraphing", false)
+	if kin % 2 == 0:
+		enemies.push_front(b)  # alternate sides of the summoner
+	else:
+		enemies.append(b)
+	await view.join_enemy(b, enemies)
+	_update_pose(b)
+	for line in data.get("arrive", []):
+		await _say(line, {"name": b})
+
+
+# Some deaths take others with them ("death_takes": the Brood's spawn die with her).
+func _take_with(e: Battler) -> void:
+	var takes: Array = e.data.get("death_takes", [])
+	var taken := false
+	for o in enemies:
+		if o != e and o.alive() and o.id in takes:
+			o.hp = 0
+			o.gone = true
+			view.kill_enemy(o)  # together, not one by one
+			taken = true
+	if taken:
+		for line in e.data.get("death_takes_lines", []):
+			await _say(line, {"user": e})
 
 
 # Drinks MP (or HP when there's none) out of the target and heals the user by what it took.

@@ -65,6 +65,14 @@ The battle ends when every enemy has fallen (won), the hero falls (lost), or he 
   flag is set (intro, pattern, an `ambush` move it makes before the first round).
 - **Backdrops:** an enemy can name its own (`"bg": "mere"`, art/battle/mere.png). The caller's `bg`
   wins.
+- **Summons** (`summon`): a newcomer drops into the formation and everyone slides to the new centred
+  layout. It's lettered by kind (the spawnling A, B...), alternates sides of its summoner, and acts
+  from the next round. It can arrive already telegraphing (`arrives_telegraphing`). When the
+  formation can't fit another, the move fizzles.
+- **Leaving** (`leaves`): a move after which the user leaves the fight without dying (no death
+  lines). A spawnling leaps onto the hero and is gone.
+- **Taken with it** (`death_takes`): when it dies, enemies of those kinds die too (the Brood's
+  spawn).
 
 ## Packs
 - Several enemies with the same "cycle" pattern stay in step, so a pack telegraphs together.
@@ -214,6 +222,27 @@ A boss that asks for its read: the never-guard player always dies, and anyone wh
 one harpoon wins. In an earlier version the lit lamp made the fight *easier*, because opening with
 the wrench skipped a thrash. Now it costs about 9 HP.
 
+### The Brood (`brood`) and her spawnlings (`spawnling`): the fen's region boss, under the well
+The mother of the riders: the spawn in Odo's bucket was hers, and the frog on Odo was one of her
+brood (lore: `docs/bestiary.md`). Brood HP 120, AGI 4. Spawnling HP 8, AGI 7. No mercy. World keeps
+her for later, as an optional descent or a return trip.
+
+Pattern: **Heave** (6-9) → **Swell** (telegraph: "Her sac swells. Something moves inside.") →
+**Hatch** ("The sac splits!"): a spawnling lands beside her, coiled to leap. A spawnling still
+alive a round later **climbs** onto the hero's back (1-2 and Drained +1) and is gone.
+- One Attack always kills a spawnling. Killing it costs a hit on her, and that's the decision.
+  Guarding doesn't stop the climb. When she dies, her spawn curl up and go still.
+- **The lesson:** priority. Kill the small thing that's about to get on you.
+
+Balance (seeds 1-100, full HP and MP, Crush + Mend, both Salves):
+
+| play (autoplay policy) | wins | turns (min/avg/max) | HP left |
+|---|---|---|---|
+| kill each spawnling first, Crush when it counts (`expert`) | 100/100 | 12 / 16 / 20 | 18-34 |
+| attack only, spawnlings first (`attack`) | 100/100 | 14 / 16.3 / 18 | 8-27 |
+| only ever hit the Brood (`boss`) | 0/100 | 10 | dead (Drained ×3) |
+| guard every telegraph (`smart`) | 0/100 | 19-20 | dead |
+
 ## Starting a battle
 Agreed with world. The battle is a CanvasLayer (layer 10) that draws over the caller and keeps
 running while the caller is paused or disabled.
@@ -252,7 +281,7 @@ characters). `say()` measures each line and warns when one doesn't fit; the wide
 
 ## Testing
 - `godot --headless --path . --script res://tools/smoke_test.gd -- smart` plays one fight and prints
-  every line. Policies: `expert`, `smart`, `skills`, `learner`, `save`, `thin`, `spam`, `attack`
+  every line. Policies: `expert`, `smart`, `skills`, `learner`, `save`, `thin`, `boss`, `spam`, `attack`
   (what each does is at the top of the file). `expert` answers every enemy's telegraph its own way,
   so it's the one to run against a new enemy first. The summary counts story flags too ("freed in
   N/100").
