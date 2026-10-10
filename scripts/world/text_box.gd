@@ -34,8 +34,8 @@ func _ready() -> void:
 	_text = _label(_panel, Vector2(8, 4), Vector2(304, 44))
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_text.visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
-	_tab = _window(Vector2(4, 116), Vector2(60, 13))
-	_tab_label = _label(_tab, Vector2(5, 0), Vector2(56, 12))
+	_tab = _window(Vector2(4, 114), Vector2(60, 15))
+	_tab_label = _label(_tab, Vector2(5, 2), Vector2(56, 12))   # 2px under the border, or O reads U
 	_more = Polygon2D.new()
 	_more.polygon = PackedVector2Array([Vector2(0, 0), Vector2(6, 0), Vector2(3, 3)])
 	_more.position = Vector2(307, 44)

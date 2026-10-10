@@ -114,6 +114,8 @@ func host_comes() -> void:
 	world.flags["odo_body"] = fell
 	world.flags["odo_freed"] = bool(result.get("flags", {}).get("freed", false))
 	lay_body(fell)
+	await world.wait(0.4)
+	await take_lantern()
 
 
 ## Odo where he fell: two free cells side by side at or next to `c` (never under the hero).
@@ -152,7 +154,10 @@ func take_lantern() -> void:
 	if not world.flags.get("host_done", false):
 		await world.narrate("Odo's lantern, set down carefully on a rock. Still lit.")
 		return
-	await world.narrate("He takes Odo's lantern.")
+	if world.flags.get("odo_freed", false):
+		await world.narrate("He takes Odo's lantern, to light the way up.")
+	else:
+		await world.narrate("He takes Odo's lantern. It's still warm.")
 	world.items["lantern"] = "Odo's lantern"
 	lantern.texture = load("res://art/world/rock.png")
 	light.set_strength(_lantern_light, 0.0)

@@ -80,19 +80,30 @@ saturated. Seeds: the Gossip (a mould made of whispers), wall-mouths, the Herald
 
 ## Building it (tech)
 - Godot 4.4.1, 320x180, 16x16 tiles on `TileMapLayer`, nearest filtering, everything at 1x, every
-  position on whole pixels. Art in `art/world/`, drawn by `art/world/src/*.py` (numpy + pillow).
-- `scenes/world/world.tscn` is the root that stays loaded: it owns story flags, the hero's carried
-  battle state, the text box, transitions, and swaps maps in and out (`scripts/world/maps/*.gd`).
-- Maps are ASCII grids turned into `TileMapLayer` cells; characters step one tile at a time.
-- **Battle hand-off** (agreed with `@fights`):
+  position on whole pixels (characters move 1px per physics tick). Text uses the theme's pixel font.
+- **Art** lives in `art/world/` and is drawn by `art/world/src/*.py` (numpy + pillow):
+  `python art/world/src/build.py` rebuilds every PNG (`fen.py`/`cave.py` tiles, `people.py` sprite
+  sheets, `props.py`); `preview.py` composes a map outside the engine. Commit the `.import` files too.
+- **The root** `scenes/world/world.tscn` (`world.gd`) stays loaded for the whole game: story `flags`,
+  key `items` (what Show offers), `hero_state` between battles, the text box, fades, sounds, and the
+  current map. `world.go(map_id, spawn)` swaps maps.
+- **Maps** are scripts in `scripts/world/maps/` extending `map.gd`: `build()` lays an ASCII grid onto a
+  `TileMapLayer` (atlases and the 4-neighbour autotiler in `tiles.gd`), places props, people, lights,
+  spawns, `examine` cells, step `triggers` and point-at `landmarks`; `arrive()` runs on entering.
+- **Events** are coroutines on the map: `await world.say(who, text)`, `world.narrate()`,
+  `world.caption()` (goes on by itself), `world.hint()` (top line, never blocks), and
+  `var a := await world.ask(point_at)` - the gesture menu; the hero acts it out and you get
+  `{"g": "nod"|"shake"|"shrug"|"silent"}`, `{"g": "point", "at": id}` or `{"g": "show", "item": id}`.
+- **Night**: `map.darken(ambient)` + `light.add(pos, radius, strength, flicker)` - four flat bands
+  with ordered dithering, multiplied over the map (`lighting.gd`).
+- **Checking**: `godot --headless --path . --script res://scripts/world/dev/world_test.gd` plays the
+  prologue's endings through (part of `tools/check.ps1`). `scripts/world/dev/drive.gd` plays any key
+  script with a window and saves screenshots; it can jump in with flags (see its header).
+- **Battle hand-off** (agreed with `@fights`, spec in `docs/combat.md`):
   ```gdscript
-  var battle = preload("res://scripts/battle/battle.gd").new()
-  add_child(battle)        # own CanvasLayer 10, process_mode ALWAYS
-  var result: Dictionary = await battle.run(["host"], context)
-  battle.queue_free()
+  var result: Dictionary = await world.battle(["host"], context)   # wraps battle.gd + the fades
   ```
-  `context` (all optional): `intro: Array[String]` (lines of 44 characters or fewer, replacing the
-  default opening), `bg` (backdrop id, default `"cave"`), `can_run` (default false), `mercy` (default
-  from enemy data), `hero: {hp, mp, items: {id: count}, states: {id: stacks}}` (missing = full HP/MP,
-  starting items). `result`: `{outcome: "won"|"lost"|"fled", hero: {...same shape}, turns: int}`.
-  The world disables itself under the battle and resumes when `run()` returns.
+  `context` (all optional): `intro: Array[String]` (44 characters a line), `bg` (`"cave"`), `can_run`
+  (false), `mercy` (from enemy data), `hero: {hp, mp, items, states, skills}` (missing keys = fresh;
+  the world merges its carried state in). `result`: `{outcome: "won"|"lost"|"fled", hero, turns,
+  flags}` - `flags.freed` when the Host died while stunned (its man lives).

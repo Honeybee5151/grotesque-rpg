@@ -20,7 +20,7 @@ var failures: Array[String] = []
 var _i := 0
 var _wait := 0.0
 var _hold := ""
-var _hold_left := 0.0
+var _hold_ticks := 0     # physics ticks left on a held direction (walking is per tick, so holds are too)
 var _until := ""
 var _until_t := 0.0
 var _mash := 0
@@ -66,10 +66,6 @@ func finished() -> bool:
 
 func _process(delta: float) -> bool:
 	if _hold != "":
-		_hold_left -= delta
-		if _hold_left <= 0.0:
-			_release(DIRS[_hold])
-			_hold = ""
 		return false
 	if _until != "":
 		_until_t += delta
@@ -123,7 +119,9 @@ func _process(delta: float) -> bool:
 		_expect(s.substr(7))
 	elif s == "dump":
 		print("dump: flags=", world.flags, " items=", world.items, " busy=", world.busy,
-			" map=", world.map.name if world.map else "-", " hero=", world.hero_state)
+			" map=", world.map.name if world.map else "-", " hero=", world.hero_state,
+			" at=", world.map.player.cell if world.map and world.map.player else "-",
+			" held=", Input.is_key_pressed(KEY_RIGHT), " fps=", Engine.get_frames_per_second())
 	elif s == "fight":
 		_fight = 1
 		_fight_t = 0.0
@@ -135,8 +133,17 @@ func _process(delta: float) -> bool:
 	elif s.contains("*"):
 		var parts := s.split("*")
 		_hold = parts[0]
-		_hold_left = int(parts[1]) * 16.0 / 60.0 - 0.02
+		_hold_ticks = int(parts[1]) * 16 - 1
 		_press(DIRS[_hold])
+	return false
+
+
+func _physics_process(_delta: float) -> bool:
+	if _hold != "":
+		_hold_ticks -= 1
+		if _hold_ticks <= 0:
+			_release(DIRS[_hold])
+			_hold = ""
 	return false
 
 

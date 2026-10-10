@@ -6,7 +6,7 @@ extends "res://scripts/world/dev/drive.gd"
 
 const HOLLOWELL_TO_CAVE := "until:They_pulled Z until:coughed Z wait:1.4 R*4 U*5 until:drowned_man_walks Z until:look_at_you Z U*1 wait:0.2 U*1 wait:0.2 L*1 Z until:sleep_till Z until:keeps_me Z until:Can_you_talk Z pick:0 until:Go_on Z until:liar Z until:parish Z until:pennies Z until:penny Z until:spawn. Z until:going_down Z until:mind_the_rope Z pick:4 until:law Z until:Moth! Z until:Two_tugs! Z until:hauls Z until:bitten Z until:Da? Z wait:0.5 U*1 Z until:Climb_down Z pick:0 until:opens_into Z wait:0.3 expect:rope_cut=true"
 
-const CAVE_TO_MOTH := "D*1 R*1 D*1 R*3 D*3 R*3 D*2 R*1 until:Still_lit Z fight expect:host_done=true expect:odo_freed=false R*1 Z until:takes Z wait:0.3 L*2 U*2 L*3 U*3 L*3 U*1 L*1 U*1 U*1 Z until:Climb_up Z pick:0 until:Where's_my_da"
+const CAVE_TO_MOTH := "D*1 R*1 D*1 R*3 D*3 R*3 D*2 R*1 until:Still_lit Z fight until:takes expect:host_done=true expect:odo_freed=false Z wait:0.3 L*1 U*2 L*3 U*3 L*3 U*1 L*1 U*1 U*1 Z until:Climb_up Z pick:0 until:Where's_my_da"
 
 const SCENARIOS := [
 	{
@@ -26,7 +26,7 @@ var _failed := 0
 
 
 func _initialize() -> void:
-	Engine.time_scale = 2.0
+	Engine.time_scale = 3.0
 	_next()
 
 
