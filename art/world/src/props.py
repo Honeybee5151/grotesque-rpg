@@ -23,8 +23,9 @@ def _r(seed):
 # the well
 # --------------------------------------------------------------------------------------------
 
-def well(lamp=True):
-    """Round stone well in 3/4 view with a wooden frame, roller and rope. 40x48, footprint 2x2."""
+def well(lamp=True, boarded=False):
+    """Round stone well in 3/4 view with a wooden frame, roller and rope. 40x48, footprint 2x2.
+    `boarded`: the morning after - planks nailed across the mouth, a stone on top, no rope."""
     W, H = 40, 48
     c = Canvas(W, H)
     cx, top, wall, rx, ry = 20, 29, 11, 16, 7       # rim centre y, wall height, radii
@@ -78,8 +79,20 @@ def well(lamp=True):
     c.rect(cx + rx - 1, 5, 3, 2, WOOD[1])          # crank
     c.vline(cx + rx + 1, 6, 10, WOOD[2])
     # the rope drops into the dark
-    for y in range(9, top + 1):
-        c.px(cx, y, ROPE[1] if y % 3 else ROPE[2])
+    if not boarded:
+        for y in range(9, top + 1):
+            c.px(cx, y, ROPE[1] if y % 3 else ROPE[2])
+    else:
+        for k, py in enumerate((top - 4, top - 1, top + 2)):   # planks across the mouth
+            x0 = cx - rx + 3 + (k % 2)
+            x1 = cx + rx - 4 - (k == 1)
+            c.rect(x0, py, x1 - x0, 2, WOOD[2])
+            c.hline(x0, x1 - 1, py, WOOD[3])
+            c.hline(x0, x1 - 1, py + 2, "#040306")
+            c.pxs([(x0 + 1, py), (x1 - 2, py)], STONE[4])    # nail heads
+        c.ellipse(cx + 3, top - 3, 3.5, 2.5, STONE[3])        # a stone to hold them down
+        c.hline(cx + 1, cx + 4, top - 5, STONE[4])
+        c.hline(cx + 1, cx + 5, top - 1, STONE[1])
     # a bucket on the rim
     c.rect(cx - rx + 4, top - 4, 5, 5, WOOD[2])
     c.hline(cx - rx + 4, cx - rx + 8, top - 4, WOOD[3])

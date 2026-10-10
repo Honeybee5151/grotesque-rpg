@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 import cave  # noqa: E402
 import fen  # noqa: E402
 import people  # noqa: E402
+import poster  # noqa: E402
 import props  # noqa: E402
 from pix import sheet  # noqa: E402
 
@@ -31,6 +32,7 @@ if __name__ == "__main__":
     save(people.odo_dead(), "odo_dead.png")
     save(people.frog_spent(), "frog_spent.png")
     save(props.well(), "well.png")
+    save(props.well(boarded=True), "well_boarded.png")
     for kind in ("odo", "shut", "dark"):
         save(props.house(kind), f"house_{kind}.png")
     save(props.lamp_post(), "lamp_post.png")
@@ -38,6 +40,7 @@ if __name__ == "__main__":
         save(props.reeds(i), f"reeds_{i}.png")
     save(props.bubble(), "bubble.png")
     save(props.lantern_icon(), "item_lantern.png")
+    save(poster.poster(), "poster.png")
     save(cave.atlas(), "cave_tiles.png")
     save(cave.rungs(), "rungs.png")
     save(cave.lantern_rock(), "lantern_rock.png")

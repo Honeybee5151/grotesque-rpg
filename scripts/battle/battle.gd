@@ -4,9 +4,11 @@ extends CanvasLayer
 ##   add_child(battle)
 ##   var result: Dictionary = await battle.run(["host"], context)
 ##   battle.queue_free()
-## context, all optional: intro (lines replacing the first enemy's own), bg ("cave"),
+## context, all optional: intro (lines replacing the first enemy's own), bg (default: the first
+##   enemy's own backdrop, else "cave"),
 ##   can_run (false), mercy (default: on if an enemy's data asks for it),
-##   hero {hp, mp, items, states, skills} carried in from outside (default: fresh).
+##   hero {hp, mp, items, states, skills} carried in from outside (default: fresh),
+##   flags: story flags in, e.g. {"lamp_lit": true} (an enemy's "if_flags" reads them).
 ## result: {outcome: "won" | "lost" | "fled", hero: {hp, mp, items, states}, turns, flags}.
 ##   flags: story flags the fight raised, e.g. {"freed": true} when the Host dies stunned.
 ## The battle draws on its own layer over whatever is underneath and keeps running while that
@@ -47,17 +49,22 @@ func run(enemy_ids: Array, context: Dictionary = {}) -> Dictionary:
 		items[id] = Data.ITEMS[id]["start"]
 	if carry.has("items"):
 		items = Dictionary(carry["items"]).duplicate()
+	var flags_in: Dictionary = context.get("flags", {})
 	for id in enemy_ids:
-		enemies.append(Battler.new().setup_enemy(id))
+		enemies.append(Battler.new().setup_enemy(id, flags_in))
 	_tell_apart()
 	mercy = context.get("mercy", enemies.any(func(e: Battler) -> bool: return e.data.get("mercy", false)))
 	can_run = context.get("can_run", false)
 	view = BattleView.new()
 	add_child(view)
-	view.build(context.get("bg", "cave"), hero, enemies)
+	view.build(context.get("bg", enemies[0].data.get("bg", "cave")), hero, enemies)
 
 	for line in context.get("intro", enemies[0].data.get("intro", [])):
 		await _say(line)
+	for e in enemies:
+		if e.data.has("ambush") and outcome == "":
+			await _use_skill(e, e.data["ambush"], hero)
+			await _settle()
 	while outcome == "":
 		await _round()
 
@@ -177,11 +184,11 @@ func _skill_menu() -> Variant:
 	return await view.menu(rows, true)
 
 
-# Enough MP for it, and a healing move only when there's something to heal.
+# Enough MP for it, and a healing move only when there's something to heal or cure.
 func _can_use(b: Battler, sk: Dictionary) -> bool:
 	if b.mp < int(sk.get("mp", 0)):
 		return false
-	return not sk.has("heal") or b.hp < b.max_hp
+	return (not sk.has("heal") and not sk.has("cures")) or _helps(b, sk)
 
 
 func _item_menu() -> Variant:
@@ -192,12 +199,13 @@ func _item_menu() -> Variant:
 		rows.append({
 			"label": "%s x%d" % [it["name"], have],
 			"value": id,
-			"enabled": have > 0 and _item_helps(hero, it),
+			"enabled": have > 0 and _helps(hero, it),
 		})
 	return await view.menu(rows, true)
 
 
-func _item_helps(b: Battler, it: Dictionary) -> bool:
+# An item or skill with "heal"/"cures" would do something for b.
+func _helps(b: Battler, it: Dictionary) -> bool:
 	if int(it.get("heal", 0)) > 0 and b.hp < b.max_hp:
 		return true
 	for s in it.get("cures", []):
@@ -287,6 +295,7 @@ func _use_skill(user: Battler, id: String, target: Battler) -> void:
 			await _say(line, vars)
 		return
 	user.mp -= cost
+	user.used[id] = user.used.get(id, 0) + 1
 	view.refresh_status(hero)
 	var lines: Array = sk.get("lines", [])
 	var movers: Array = [user]
@@ -299,16 +308,19 @@ func _use_skill(user: Battler, id: String, target: Battler) -> void:
 		_chorus_said[id] = true
 	for line in lines:
 		await _say(line, vars, movers)
+	var onto_user: Dictionary = sk.get("self_states", {})
+	for s in onto_user:
+		await _add_state(user, s, onto_user[s])
 	if sk.get("guard", false):
 		user.guarding = true
 	if sk.has("power") or sk.has("dmg"):
 		await _strike(user, target, id, vars)
-	if sk.has("heal"):
-		var healed := _heal(target, int(sk["heal"]))
-		await _say(_fill(Data.TEXT["heal"], {"heal": healed}))
+	if sk.has("heal") or sk.has("cures"):
+		await _mend(target, sk)
 	if sk.has("steal_mp"):
 		await _steal(user, target, sk, vars)
 	user.telegraphing = sk.get("telegraph", false)
+	user.tele_pose = sk.get("pose", "telegraph")
 	_update_pose(user)
 
 
@@ -335,10 +347,13 @@ func _strike(user: Battler, target: Battler, id: String, vars: Dictionary) -> vo
 	var line: String = sk["crit_hit"] if crit and sk.has("crit_hit") else sk.get("hit", "")
 	var exposed := false
 	for s in target.states:
-		if Data.STATES[s].has("damage_taken"):
-			d = roundi(d * float(Data.STATES[s]["damage_taken"]))
+		var st: Dictionary = Data.STATES[s]
+		if st.has("damage_taken"):
+			d = roundi(d * float(st["damage_taken"]))
 			line = _state_text(target, s, "hit", line)
 			exposed = true
+		elif st.has("damage_taken_per_stack"):
+			d = roundi(d * (1.0 + float(st["damage_taken_per_stack"]) * target.states[s]))
 	d = maxi(int(r["min_damage"]), d)
 	var guarded := target.guarding
 	if guarded:
@@ -377,19 +392,22 @@ func _hurt(b: Battler, d: int, big: bool = false) -> int:
 func _use_item(user: Battler, id: String) -> void:
 	var it: Dictionary = Data.ITEMS[id]
 	items[id] = int(items[id]) - 1
-	var cured: Array[String] = []
-	for s in it.get("cures", []):
-		if user.stacks(s) > 0:
-			cured.append(s)
-			user.states.erase(s)
-	var healed := _heal(user, int(it.get("heal", 0)))
 	for line in it.get("lines", []):
 		await _say(line, {"user": user})
+	await _mend(user, it)
+
+
+# Heals ("heal") and cures ("cures") b, from an item or a skill, and says so in one line:
+# "15 HP restored. The drain lifts."
+func _mend(b: Battler, src: Dictionary) -> void:
 	var parts: Array[String] = []
-	if it.has("heal"):
-		parts.append(_fill(Data.TEXT["heal"], {"heal": healed}))
-	for s in cured:
-		parts.append(Data.STATES[s]["cure"])
+	for s in src.get("cures", []):
+		if b.stacks(s) > 0:
+			b.states.erase(s)
+			parts.append(Data.STATES[s]["cure"])
+	var healed := _heal(b, int(src.get("heal", 0)))
+	if src.has("heal"):
+		parts.push_front(_fill(Data.TEXT["heal"], {"heal": healed}))
 	if not parts.is_empty():
 		await _say(" ".join(parts))
 
@@ -476,9 +494,9 @@ func _update_pose(b: Battler) -> void:
 	if b.skips_turn():
 		view.set_pose(b, "stunned")
 	elif b.telegraphing:
-		view.set_pose(b, "telegraph")
+		view.set_pose(b, b.tele_pose)
 	else:
-		view.set_pose(b, "normal")
+		view.set_pose(b, EnemyAI.rest_pose(b))
 
 
 # ======================================================================================

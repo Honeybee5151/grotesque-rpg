@@ -68,11 +68,12 @@ func lay(layout: PackedStringArray, atlas: Dictionary) -> void:
 				walls[c] = true
 
 
-## Darkness over the whole map; `ambient` is the light level away from any lamp (0 = black).
-func darken(ambient: float) -> void:
+## Darkness over the whole map; `ambient` is the light level away from any lamp (0 = black, 1 =
+## none at all). `top` tints the brightest band (lamplight by default).
+func darken(ambient: float, top := Color(1.0, 0.93, 0.80)) -> void:
 	light = Lighting.new()
 	add_child(light)
-	light.setup(Vector2(size_px()), ambient)
+	light.setup(Vector2(size_px()), ambient, top)
 
 
 ## Stands a sprite on a footprint of cells whose top-left is `c`, its bottom edge on the bottom of

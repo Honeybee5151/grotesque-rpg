@@ -42,6 +42,12 @@ if [ "${1:-}" = "--real" ]; then
   REPO="$(git -C "$PROJ" remote get-url origin | sed -E 's#^(git@github\.com:|https://github\.com/)##; s#\.git$##')"
   API="https://api.github.com/repos/$REPO/releases/latest"
   TAG="$(curl -sf "$API" | grep -o '"tag_name": *"[^"]*"' | head -1 | sed -E 's/.*"v?([^"]*)"$/\1/')"
+  # GitHub caches releases/latest for about a minute, so just after a release the game can still be
+  # told the previous version: retry for a couple of minutes before calling it a failure.
+  for _ in 1 2 3 4 5 6; do
+    API="$API" run download | grep -qF "Update v$TAG ready" && break
+    run clean >/dev/null; echo "  (GitHub still serves an older latest release; retrying in 20 s)"; sleep 20
+  done
   echo "== download the latest real release of $REPO (v$TAG)"; API="$API" expect "Update v$TAG ready" download
   echo "== next launch mounts it";                                 expect "applied=true after: $TAG" apply
   finish

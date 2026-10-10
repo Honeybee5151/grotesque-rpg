@@ -2,7 +2,7 @@ extends SceneTree
 ## Dev driver for the overworld: loads the world, plays a script of key presses and waits, and saves
 ## screenshots. Run with a window (not --headless) to get pictures:
 ##   godot --path . --script res://scripts/world/dev/drive.gd -- OUT_DIR "R*6 U*4 shot:a Z wait:1 ..." [START]
-## START (optional) jumps in: "map:spawn:flag,flag,+item,..." e.g. "well_cave:shaft:odo_down,rope_cut".
+## START (optional) jumps in: "map:spawn:flag,key=value,+item,..." e.g. "well_cave:shaft:odo_down,rope_cut".
 ## Steps: <Key>*n holds a direction for n tiles (U D L R), Z / X press a button, wait:<sec>,
 ## shot:<name> saves OUT_DIR/<name>.png (skipped headless), pick:<n> moves a menu cursor n down and
 ## confirms, until:<text> waits until the text box shows text containing <text> (max 20 s; "_" is a
@@ -60,6 +60,8 @@ func begin(script: String, start := "") -> void:
 			for f in parts[2].split(",", false):
 				if f.begins_with("+"):
 					world.items[f.substr(1)] = f.substr(1).capitalize()
+				elif f.contains("="):
+					world.flags[f.get_slice("=", 0)] = f.get_slice("=", 1)
 				else:
 					world.flags[f] = true
 	root.add_child(world)
@@ -237,7 +239,7 @@ func _drive_step() -> bool:
 
 # Goes on through whatever the box is doing: Z on a finished line, the first choice in a menu.
 func _go_on(state: String) -> void:
-	if state == "wait" or state == "menu" or state == "typing":
+	if state in ["wait", "menu", "typing", "picture"]:
 		_tap(KEY_Z)
 		_wait = 0.06
 
