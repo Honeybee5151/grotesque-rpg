@@ -76,7 +76,9 @@ Lessons from redrawing the Host. Read before drawing anything.
 - Backdrops so far (`tools/art/<name>_bg.py`, each with `--preview`): `mere` (the Black Mere, night on
   the barge - Old Iron), `swallow` (the Long Swallow, inside the Ever-Sow's gullet, lit by candles
   applicants left in the ribs - Gorger packs), `tasting` (the Tasting hall: a one-point feast hall,
-  bunting and sausages, tables down both sides, the gourmet's empty throne - the Ever-Sow).
+  bunting and sausages, tables down both sides, the gourmet's empty throne - the Ever-Sow), `plenty`
+  (Plenty's streets at festival dusk: meat-shaped shop signs, a gravy gutter, paper crowns in the mud,
+  the gate behind the monster - street Gorgers and the Second Chin).
 - Make poses parameters of one sculpt (head/limb frames, a lift, named arm variants), not separate
   drawings - see `tools/art/host.py`. The design and the light stay consistent across poses.
 - Show Miles 2-3 options as one labelled sheet before polishing one. Concepts and sheets go in
