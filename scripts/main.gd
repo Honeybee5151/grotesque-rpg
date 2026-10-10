@@ -1,7 +1,7 @@
 extends Node2D
 ## The tutorial fight on its own, where the title screen's Play lands: the hero against the Host,
 ## then Z fights again and X goes back to the title. The battle itself is scripts/battle/battle.gd,
-## which the world starts the same way.
+## which the world starts the same way. The hero brings only Crush, as in world's prologue.
 
 const Battle := preload("res://scripts/battle/battle.gd")
 
@@ -11,7 +11,7 @@ func _ready() -> void:
 	while true:
 		var battle := Battle.new()
 		add_child(battle)
-		await battle.run(["host"])
+		await battle.run(["host"], {"hero": {"skills": ["crush"]}})
 		await battle.view.say("Z: fight again    X: title screen", 0.0)
 		var again: bool = await battle.view.wait_choice()
 		battle.queue_free()

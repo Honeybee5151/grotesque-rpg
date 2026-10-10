@@ -5,6 +5,9 @@ extends SceneTree
 ## Policies: "smart" guards when an enemy telegraphs and salves when Drained and low (no skills);
 ## "skills" plays smart and saves Crush for a stunned enemy, Mends when low;
 ## "spam" Crushes whenever it can afford to, otherwise attacks;
+## "save" plays to free the Host's man: it never lands a blow that could kill outside a stun, and
+## Crushes the stun; "learner" plays like "skills" but misses the first telegraph (it only starts
+## guarding once it has been Drained);
 ## "attack" only ever attacks: it always gets Drained, and in the tutorial mercy (1 HP floor)
 ## catches it now and then -- the summary counts how often.
 ## Any policy aims at a stunned enemy when it has a choice.
@@ -96,10 +99,12 @@ func _run_one(s: int) -> Dictionary:
 	_flush()
 	var outcome: String = {"won": "VICTORY", "lost": "DEFEAT", "fled": "FLED"}[r["outcome"]]
 	var salves: int = battle.items.get("salve", 0)
-	print("=== RESULT: %s | hero hp=%d mp=%d drained=%d salves=%d | turns=%d" % [
-		outcome, battle.hero.hp, battle.hero.mp, battle.hero.stacks("drained"), salves, turn])
+	var raised: Array = r["flags"].keys()
+	print("=== RESULT: %s | hero hp=%d mp=%d drained=%d salves=%d | turns=%d%s" % [
+		outcome, battle.hero.hp, battle.hero.mp, battle.hero.stacks("drained"), salves, turn,
+		(" | flags=" + ",".join(raised)) if not raised.is_empty() else ""])
 	var row := {"won": r["outcome"] == "won", "turns": turn, "hp": battle.hero.hp, "frames": frames,
-		"mp": battle.hero.mp,
+		"mp": battle.hero.mp, "flags": raised,
 		"lowest": lowest_hp, "drained": most_drained,
 		"salves": int(Data.ITEMS["salve"]["start"]) - salves}
 	battle.queue_free()
@@ -150,18 +155,27 @@ func _choose() -> String:
 	var stunned := battle.enemies.any(func(e) -> bool: return e.alive() and e.stacks("stunned") > 0)
 	var salves: int = battle.items.get("salve", 0)
 	match policy:
-		"smart", "skills":
-			if telegraph:
+		"smart", "skills", "learner":
+			if telegraph and (policy != "learner" or most_drained > 0):
 				return "guard"
-			if policy == "skills" and stunned and _affords("crush"):
+			if policy != "smart" and stunned and _affords("crush"):
 				return "skill:crush"
-			if policy == "skills" and h.hp < 25 and _affords("mend"):
+			if policy != "smart" and h.hp < 25 and _affords("mend"):
 				return "skill:mend"
 			if h.stacks("drained") > 0 and h.hp < 40 and salves > 0:
 				return "item:salve"
 		"spam":
 			if _affords("crush"):
 				return "skill:crush"
+		"save":
+			if telegraph:
+				return "guard"
+			if stunned:
+				return "skill:crush" if _affords("crush") else "attack"
+			# An attack rolls at most ATK x 1.15, x 1.5 on a crit: hold back while that could kill.
+			var reach := ceili(Data.HERO["atk"] * (1.0 + Data.RULES["variance"]) * Data.RULES["crit_mult"])
+			if battle.enemies.any(func(e) -> bool: return e.alive() and e.hp <= reach):
+				return "guard"
 	return "attack"
 
 
@@ -190,6 +204,8 @@ func _summary(rows: Array) -> void:
 		won, rows.size(), _spread(rows, "turns"), _spread(rows, "hp"), _spread(rows, "lowest"),
 		_spread(rows, "drained"), _spread(rows, "salves")])
 	print("mp left %s" % _spread(rows, "mp"))
+	var freed := rows.filter(func(r) -> bool: return "freed" in r["flags"]).size()
+	print("freed (killed while stunned) in %d/%d" % [freed, rows.size()])
 	print("down to 1 HP (mercy's floor, if on) in %d/%d" % [floored, rows.size()])
 	print("frames per battle %s" % _spread(rows, "frames"))
 
