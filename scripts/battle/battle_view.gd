@@ -76,21 +76,73 @@ func build(bg: String, hero: Battler, enemies: Array) -> void:
 	_build_backdrop(bg)
 	_shader = Shader.new()
 	_shader.code = SHADER
-	# Canvases side by side, GAP apart, the whole formation centred.
-	var poses: Array = []
 	var nth := {}
-	var total := GAP * (enemies.size() - 1)
 	for e in enemies:
 		var art: String = e.data.get("sprite", e.id)
 		nth[art] = nth.get(art, 0) + 1
-		poses.append(_load_poses(art, nth[art], e.data.get("poses", [])))
-		total += poses.back()["normal"].get_width()
-	var left := floorf(160.0 - total / 2.0)
-	for i in enemies.size():
-		var w: float = poses[i]["normal"].get_width()
-		_add_enemy(enemies[i], poses[i], floorf(left + w / 2.0))
-		left += w + GAP
+		_add_enemy(e, _load_poses(art, nth[art], e.data.get("poses", [])))
+	var xs := _layout(enemies)
+	for e in enemies:
+		_place(e, xs[e])
 	_build_ui(hero)
+
+
+# Canvases side by side, GAP apart, the standing formation centred: battler -> centre x.
+func _layout(enemies: Array) -> Dictionary:
+	var standing := enemies.filter(func(e: Battler) -> bool: return not e.gone)
+	var total := GAP * (standing.size() - 1)
+	for e in standing:
+		total += _width(e)
+	var left := floorf(160.0 - total / 2.0)
+	var xs := {}
+	for e in standing:
+		xs[e] = floorf(left + _width(e) / 2.0)
+		left += _width(e) + GAP
+	return xs
+
+
+func _width(e: Battler) -> float:
+	return _foes[e]["poses"]["normal"].get_width()
+
+
+# Would one more of this enemy fit in the formation?
+func has_room(enemies: Array, newcomer_art: String) -> bool:
+	var total := 0.0
+	for e in enemies:
+		if not e.gone:
+			total += _width(e) + GAP
+	var w: float = _load_poses(newcomer_art, 1)["normal"].get_width()
+	return total + w <= 312.0
+
+
+# A newcomer drops into the formation mid-fight while everyone else slides over to make room.
+func join_enemy(b: Battler, enemies: Array) -> void:
+	var art: String = b.data.get("sprite", b.id)
+	var nth := enemies.filter(func(e: Battler) -> bool: return e.data.get("sprite", e.id) == art).size()
+	_add_enemy(b, _load_poses(art, nth, b.data.get("poses", [])))
+	var xs := _layout(enemies)
+	var tw := create_tween().set_parallel(true)
+	for e in xs:
+		var s: Sprite2D = _foes[e]["sprite"]
+		_foes[e]["x"] = xs[e]
+		if e == b:
+			s.position = Vector2(xs[e], GROUND_Y - 16.0)
+			s.modulate.a = 0.0
+			tw.tween_property(s, "position:y", GROUND_Y, 0.3).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+			tw.tween_property(s, "modulate:a", 1.0, 0.15)
+		else:
+			tw.tween_property(s, "position:x", xs[e], 0.3)
+	await tw.finished
+
+
+# It leaves the fight without dying (a spawnling leaping onto the hero): down off the screen.
+func leave_enemy(b: Battler) -> void:
+	var s: Sprite2D = _foes[b]["sprite"]
+	var tw := create_tween().set_parallel(true)
+	tw.tween_property(s, "position:y", GROUND_Y + 40.0, 0.3).set_ease(Tween.EASE_IN)
+	tw.tween_property(s, "modulate:a", 0.0, 0.3)
+	await tw.finished
+	s.hide()
 
 
 # ======================================================================================
@@ -181,7 +233,7 @@ func _load_poses(art: String, nth: int, extra: Array = []) -> Dictionary:
 	return poses
 
 
-func _add_enemy(b: Battler, poses: Dictionary, x: float) -> void:
+func _add_enemy(b: Battler, poses: Dictionary) -> void:
 	var mat := ShaderMaterial.new()
 	mat.shader = _shader
 	mat.set_shader_parameter("flash", 0.0)  # set up front: tweens need them to exist
@@ -190,10 +242,15 @@ func _add_enemy(b: Battler, poses: Dictionary, x: float) -> void:
 	s.centered = false
 	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	s.material = mat
-	s.position = Vector2(x, GROUND_Y)
 	add_child(s)
-	_foes[b] = {"sprite": s, "mat": mat, "poses": poses, "x": x, "pose": "normal"}
+	move_child(s, 1)  # just above the backdrop, behind every window
+	_foes[b] = {"sprite": s, "mat": mat, "poses": poses, "x": 160.0, "pose": "normal"}
 	set_pose(b, "normal")
+
+
+func _place(b: Battler, x: float) -> void:
+	_foes[b]["x"] = x
+	_foes[b]["sprite"].position = Vector2(x, GROUND_Y)
 
 
 # Bottom-centre anchor: every pose stands on the ground line whatever its canvas.

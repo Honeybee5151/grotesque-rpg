@@ -8,7 +8,8 @@ extends SceneTree
 ## "save" plays to free the Host's man: it never lands a blow that could kill outside a stun, and
 ## Crushes the stun; "learner" plays like "skills" but misses the first telegraph (it only starts
 ## guarding once a big move has left a state on him: Drained, Harpooned); "thin" focuses the weakest enemy and Crushes whenever that
-## kills (a pack's answer), never guarding; "expert" answers each telegraph the way its enemy
+## kills (a pack's answer), never guarding; "boss" only ever attacks the toughest enemy (tunnel
+## vision: it ignores adds); "expert" answers each telegraph the way its enemy
 ## teaches (Guard a guard_blocks move, Crush a breakable inhale, thin a pack), Crushes the stun;
 ## "attack" only ever attacks: it always gets Drained, and in the tutorial mercy (1 HP floor)
 ## catches it now and then -- the summary counts how often.
@@ -151,9 +152,12 @@ func _decide() -> void:
 		_pick(want)  # the item or skill menu
 	else:
 		# A target menu: a stunned enemy if there is one, then a telegraphing one, then the weakest.
+		# ("boss" aims at the toughest, always.)
 		v.menu_cursor = 0
 		for i in v.menu_items.size():
-			if _rank(v.menu_items[i]["value"]) < _rank(v.menu_items[v.menu_cursor]["value"]):
+			var e = v.menu_items[i]["value"]
+			var best = v.menu_items[v.menu_cursor]["value"]
+			if (policy == "boss" and e.hp > best.hp) or (policy != "boss" and _rank(e) < _rank(best)):
 				v.menu_cursor = i
 		v.action("ok")
 
@@ -196,6 +200,10 @@ func _choose() -> String:
 						return "guard"
 			if stunned and _affords("crush"):
 				return "skill:crush"
+			# A telegraphing add that one Attack surely kills: kill it now (the target menu aims there).
+			var sure := roundi(Data.HERO["atk"] * h.atk_mult() * (1.0 - float(Data.RULES["variance"])))
+			if battle.enemies.any(func(e) -> bool: return e.alive() and e.telegraphing and e.hp <= sure):
+				return "attack"
 			var hit := roundi(Data.HERO["atk"] * h.atk_mult() * float(Data.SKILLS["crush"]["power"]))
 			if battle.enemies.size() > 1 and _affords("crush") and battle.enemies.any(func(e) -> bool: return e.alive() and e.hp <= hit):
 				return "skill:crush"
