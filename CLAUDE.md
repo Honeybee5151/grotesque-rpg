@@ -21,6 +21,9 @@ world of wonderfully grotesque monsters. **Miles** is the director: big creative
 - Never force-push, never rewrite `main`'s history, never delete other roles' branches or worktrees.
 - 320x180 base resolution, integer scaling, nearest filtering. **All pixel art at 1x** - never scale a
   sprite up in-engine (mixed pixel sizes look cheap). Battlers are at most 104x118.
+- `project.godot` changes never reach installed games through updates (Godot reads project settings
+  once, from the exe; `game.pck` only replaces files). Settings that matter are also applied from code in
+  `scripts/display.gd`; don't add autoloads, input actions or other project settings without asking `@misc`.
 - Commit the `.import` file Godot writes next to each new asset: it holds the asset's import settings
   and the UID that scenes and resources reference (only `.godot/` is local).
 - Run the relevant checks before saying something works, and look at rendered art before showing it.

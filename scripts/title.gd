@@ -2,6 +2,7 @@ extends Node2D
 ## Title screen: Play / Quit, plus the update status line. An update that finishes downloading
 ## adds a "Restart to update" entry; you can keep playing meanwhile (it applies on next launch).
 
+const Display := preload("res://scripts/display.gd")
 const Sprites := preload("res://scripts/sprite_factory.gd")
 const Updater := preload("res://scripts/updater.gd")
 const HOST := preload("res://art/monsters/host/normal.png")
@@ -17,6 +18,7 @@ var updater: Node
 
 
 func _ready() -> void:
+	Display.apply(get_tree())  # before any label exists: updated installs need it (see display.gd)
 	RenderingServer.set_default_clear_color(Color("#07050d"))
 	_build_scene()
 	items = [{"label": "Play", "id": "play"}, {"label": "Quit", "id": "quit"}]
