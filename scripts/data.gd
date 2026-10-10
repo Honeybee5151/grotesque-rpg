@@ -39,7 +39,8 @@ const RULES := {
 # ("lines_alone" instead when only one is left). "states_once": its states land once a round,
 # from the first hit, however many of the pack bite. "steal_mp": takes up to that much MP and
 # heals the user by what it took ("steal_hp" instead when there's none to take); not damage, so
-# Guard doesn't touch it.
+# Guard doesn't touch it. "summon": an enemy id that joins the formation (it acts from next
+# round). "leaves": the user leaves the fight after the move, without dying.
 const SKILLS := {
 	# --- the hero ---
 	"attack": {
@@ -153,6 +154,28 @@ const SKILLS := {
 		"dmg": [16, 20],
 		"hit": "{Target} takes {dmg} damage.",
 	},
+	# --- the Brood: heave -> swell (telegraph) -> hatch a spawnling, which climbs on next round ---
+	"heave": {
+		"lines": ["{User} heaves her bulk at {target}!"],
+		"dmg": [6, 9],
+		"hit": "{Target} takes {dmg} damage.",
+	},
+	"swell": {
+		"telegraph": true,
+		"lines": [{"say": "Her sac swells. Something moves inside.", "hold": 0.4,
+			"pose": "telegraph", "sfx": "coil"}],
+	},
+	"hatch": {
+		"lines": [{"say": "The sac splits!", "sfx": "hurt", "shake": true}],
+		"summon": "spawnling",
+	},
+	"climb": {
+		"lines": [{"say": "{User} leaps onto {target}'s back!", "hold": 0.35}],
+		"dmg": [1, 2],
+		"states": {"drained": 1},
+		"hit": "Its sucker finds his neck. {dmg} damage.",
+		"leaves": true,
+	},
 	# --- Penny Leeches: nip, nip... then all rear up as one (telegraph) and all latch at once ---
 	"nip": {
 		"dmg": [1, 3],
@@ -239,7 +262,9 @@ const ITEMS := {
 # 1 HP in a fight with it. "state_text": {state: {key: lines}} says a state's lines its own way. "phases": patterns it
 # moves through as it uses skills (scripts/battle/enemy_ai.gd). "if_flags": {flag: {data}} swaps
 # that data in when the caller's context.flags sets the flag. "poses": extra pose names to load.
-# "ambush": a skill it uses before the first round, before the hero can act. "bg": the backdrop
+# "ambush": a skill it uses before the first round, before the hero can act. "death_takes": enemy
+# ids that die with it ("death_takes_lines" said once). A summoned enemy: "arrives_telegraphing"
+# shows its telegraph from the moment it lands, "arrive" lines are said as it does. "bg": the backdrop
 # its fight uses unless the caller names one. A phase's "rest_pose" replaces normal while in it.
 const ENEMIES := {
 	"host": {
@@ -326,6 +351,35 @@ const ENEMIES := {
 		],
 		"death": ["Old Iron sinks, still bristling.", "The Mere goes flat and black."],
 	},
+	# The fen's region boss, under the well: her spawn was in Odo's bucket, and the frog on Odo was
+	# one of hers. Teaches priority: every swell hatches a spawnling, and one left alive a round
+	# later climbs onto the hero (Drained). One Attack kills a spawnling; it costs a hit on her.
+	"brood": {
+		"name": "the Brood",
+		"sprite": "brood",
+		"max_hp": 120,
+		"def": 0,
+		"agi": 4,
+		"ai": "cycle",
+		"pattern": ["heave", "swell", "hatch"],
+		"intro": ["The black pool heaves. Something surfaces.", "A pale sac hangs under her, full."],
+		"death": ["Her sac empties with a long, wet sigh.", "The nursery goes quiet."],
+		"death_takes": ["spawnling"],
+		"death_takes_lines": ["Her spawn curl up and go still."],
+	},
+	# A hatched rider, a baby Sucker Frog. It lands coiled to leap: kill it before it climbs on.
+	"spawnling": {
+		"name": "the spawnling",
+		"sprite": "spawnling",
+		"max_hp": 8,
+		"def": 0,
+		"agi": 7,
+		"ai": "cycle",
+		"pattern": ["climb"],
+		"arrives_telegraphing": true,
+		"arrive": ["{Name} lands, coiled to leap."],
+		"death": ["{User} squeals and curls up."],
+	},
 	# A bog body on the drowned boardwalk. Teaches Crush: break the inhale before it drinks your MP,
 	# and spend MP rather than hoard it. Guard doesn't help against the drink.
 	"mouther": {
@@ -370,4 +424,5 @@ const TEXT := {
 	"defeat": ["{hero} collapses.", "Everything goes quiet."],
 	"flee": ["{hero} backs away into the dark."],
 	"no_mp": ["{User} tries, but he's spent."],
+	"no_room": ["Nothing more can squeeze in."],
 }

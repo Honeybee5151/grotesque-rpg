@@ -141,3 +141,78 @@ sheet: `art/concepts/old_iron_poses.png`.
 crossed by night on the ferrywoman's barge: the Mere's boss, after the Mouther and the leeches. She
 tells the hero to put Odo's lantern out - douse it and cross blind, or keep it lit and Old Iron
 comes. The battle is on the barge's deck at night: black water, fog, the barge's lantern swinging.
+
+## The Gorger (`gorger`) - Plenty's common pack monster
+
+**Look.** A walking stomach on stubby legs: a tiny head in a paper festival crown, cheeks stuffed,
+a napkin tucked in its collar spattered with sauce, and a second mouth grinning and chewing right
+across its belly - mouths budding where mouths shouldn't. Pink and greasy, almost funny. Focal
+accent: the belly-mouth.
+
+**Lore.** It ate the holy pig's meat and grew back fatter every time; now it can't stop.
+
+**Hook: it eats until it can't move.** Its telegraph is a feast: it shovels food into both mouths
+and heals. Then it puts itself out - bloated, it loses its next action and takes double, so a Crush
+that turn hits for four. A telegraph that is an **opening**, not a threat. In a pack they feast on
+their own clocks, not together: most rounds one is bloated, so the lesson is picking the open one.
+The feast heals less than the bloated punish deals (`@fights`).
+
+**Flavour.** Carnival.
+
+**Sprites.** `art/monsters/gorger/`, 72x80: `normal`, `normal_2`, `normal_3` (three individuals:
+fork and drumstick, a pie hugged to its belly, a string of sausages), `telegraph` (the feast: arms up
+shovelling, cheeks bulging, the belly-mouth gaping on food), `stunned` (bloated: swollen rounder,
+tipped back, legs splayed, eyes rolled, napkin popped, a puff of steam), `hurt`. Source:
+`tools/art/gorger.py`; sheet: `art/concepts/gorger_poses.png`.
+
+## The Second Chin (`second_chin`) - a Plenty alderman
+
+**Look.** A pear-shaped alderman in roast-red velvet, a gold chain of office and lace at his throat.
+His own little face, frightened, under a powdered wig - and under it a double chin grown into a face
+of its own, beady and sneering, that does the talking now. Focal accent: the chin's mouth.
+
+**Lore.** He ate at the holy pig's table every feast day, and what grew back grew a mind of its own.
+He hasn't finished a sentence in years; it finishes them for him.
+
+**Hook: the critic.** It remembers what the hero did last round, and says so - "It eyes your raised
+arms, bored." (telegraph: the knowing look). If he does the same thing again that round, it says
+"Predictable." and counter-hits; if he changes his answer, it scowls and whiffs. Decided before he
+picks and reading only last round, so it's fair and readable. Teaches **varying your answers**
+(Attack and Crush count as different; `@fights`).
+
+**Flavour.** Carnival.
+
+**Sprites.** `art/monsters/second_chin/`, 88x118: `normal` (stiff, his face afraid, the chin
+sneering), `telegraph` (the knowing look: the chin juts, eyes narrowed to slits, a smug lopsided
+smirk; his little hand flies to his mouth), `hurt` (the chin grimaces, the body jiggles back).
+Source: `tools/art/second_chin.py`; sheet: `art/concepts/second_chin_poses.png`.
+
+## The Ever-Sow (`ever_sow`) - Plenty's holy pig, its boss
+
+**Look.** A vast sow, three-quarter on, dressed like a shrine: candles and ribbons, a velvet cloth, a
+gold ring through her snout, a butcher's cleaver left in her back. Her flanks are carved in clean
+butcher's slabs down to raw meat, budding back. Focal accent: the raw red of the cuts.
+
+**Lore.** Plenty is fed by her: carve what you like, it grows back by morning. Whatever ate of her
+grows back too - which is why salt, and the Salt Guild, matter here.
+
+**Hook: it grows back.** Her wounds knit (telegraph: she arches, snout up, new flesh swelling out of
+the cuts like dough), and next round she regrows a great heal. Throw Salt on her while she knits and
+the wound salts shut: the heal is lost and she's stunned. Salt any other time is a small sting, and
+it's scarce (2-3 a fight, from the Salt Guild). Teaches **the right item at the right time**
+(Salt becomes a thrown item; `"break": {"by": ["salt"]}`, `@fights`).
+
+**Flavour.** Carnival.
+
+**Sprites.** `art/monsters/ever_sow/`, 104x96: `normal` (serene, carved, budding), `telegraph`
+(knitting), `stunned` (salted: the cuts crusted white, slumped onto her belly, eyes squeezed, a candle
+down, salt spilled), `hurt`. Source: `tools/art/ever_sow.py`; sheet: `art/concepts/ever_sow_poses.png`.
+
+## Plenty (region 2) - how it was planned
+
+world's region 2: the mouth that **gorges**, carnival - bodies overflowing, almost funny, saturated
+(roast reds, yolk yellows, pinks), lit warmer and fuller than the fen (`carnival_light`). The
+regional idea: whatever ate the Ever-Sow's meat grows back, and **salt** stops it. Each monster
+teaches a new answer: a telegraph that is an opening (the Gorger), varying your answers (the Second
+Chin), the right item at the right time (the Ever-Sow). The concept sheet the set came from:
+`art/concepts/plenty_options.png` (source `tools/art/plenty_concepts.py`). All three are built.
