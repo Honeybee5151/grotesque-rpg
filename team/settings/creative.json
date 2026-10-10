@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(git push *main*)",
+      "PowerShell(git push *main*)",
+      "Edit(**/VERSION)",
+      "Edit(**/.github/**)",
+      "Bash(git push *--force*)",
+      "PowerShell(git push *--force*)",
+      "Bash(git push * -f *)",
+      "PowerShell(git push * -f *)",
+      "Bash(git push * -f)",
+      "PowerShell(git push * -f)"
+    ]
+  }
+}
