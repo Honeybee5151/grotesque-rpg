@@ -105,3 +105,28 @@ world's region 1: a mouth that **sucks**, dread, night and fog, lantern amber th
 Every fen monster's big move is answered differently: the Host teaches **Guard**, the Mouther
 **Crush**, the Penny Leeches **thinning a pack**, the Brood **priority**. The concept sheet the set
 came from: `art/concepts/fen_options.png` (source `tools/art/fen_concepts.py`). All four are built.
+
+## Old Iron (`old_iron`) - the whale that hunts the hunters
+
+Miles' brief: a whale that hunts humans with a harpoon, out of revenge. Picked from three concepts
+(`art/concepts/whale_options.png`, source `tools/art/whale_concepts.py`).
+
+**Look.** A vast sperm whale spyhopping out of black water - its head stood straight up to watch
+you - prune-wrinkled, scarred and barnacled, its hide bristling with the rusted harpoons of every
+whaler who ever struck it, rotten ropes trailing. A narrow toothed jaw hangs open down its front.
+Its old eye is amber, the colour of lamplight: lamps burn whale oil. That eye is the focal accent.
+
+**Lore.** It never died. It kept every harpoon ever thrown at it, and now it gives them back.
+
+**Hook: it gives them back** (proposal for `@fights`). It wrenches a harpoon out of its own hide and
+clamps it in its jaw (telegraph), then flings it: a heavy hit, and the harpoon stays in the hero,
+bleeding him the way it has bled for years. Guard: it glances off. Every harpoon it gives back
+leaves a wound open in its hide, so the more it throws, the softer it gets: bait the throws, brace,
+strike the wounds. Its hide holds only so many.
+
+**Flavour.** Dread.
+
+**Sprites.** `art/monsters/old_iron/`, 104x118: `normal` (spyhopping, watching), `telegraph` (it
+rears back, a harpoon pulled from its own hide clamped across its jaw, the wound bleeding), `hurt`
+(it rolls away, eye shut). It stands in its own patch of water. Source: `tools/art/old_iron.py`;
+sheet: `art/concepts/old_iron_poses.png`. Placement: it needs water - `@world`.
