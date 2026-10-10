@@ -49,6 +49,16 @@ The battle ends when every enemy has fallen (won), the hero falls (lost), or he 
   takes double damage and shows its `stunned` pose. A pattern ("cycle") enemy then starts its
   pattern over.
 
+## Packs
+- Several enemies with the same "cycle" pattern stay in step, so a pack telegraphs together.
+- **Chorus** moves (`chorus`): when several pack members use the move in the same round, its lines
+  are said once and its cues (pose, flash) move them all together. When only one is left, its
+  `lines_alone` are used instead.
+- `states_once`: the move's states land once a round, from the first hit, however many bite. A
+  pack drains you a stack per round rather than a stack per member.
+- Art: the n-th member with the same sprite takes `<pose>_<n>.png` when there is one (`normal_2`,
+  `normal_3`), so a pack isn't three clones. A shared `telegraph.png` makes the unison the warning.
+
 ## States
 | state | stacks | effect | ends |
 |---|---|---|---|
@@ -110,6 +120,30 @@ Balance (`tools/smoke_test.gd`, seeds 1-100; every policy wins, the tutorial can
 Guarding is what saves him; Crush is the tool that does it. Spending Crush anywhere else is fast but
 gives him up.
 
+### Penny Leeches (`penny_leech`): the fen's first ordinary fight, a pack of three
+Black leeches with Hollowell's wished-away pennies set in their skin (lore: `docs/bestiary.md`). HP
+20, DEF 0, AGI 8 (the hero acts first). No mercy.
+
+Pattern, in step: **Nip** (1-3) → **Sway** (telegraph, chorus: "The leeches rear up as one, suckers
+wide.") → **Drink** (chorus: "They drop onto Wanderer together!", each bites for 2-4, and Drained +1
+once a round).
+- Guard only halves the bites; Drained still lands. The answer is thinning the pack. A Crush
+  (exactly 20) kills a leech outright, an Attack (at most 18) never does, and the hero acts first.
+  So Crush one in round 1 and another during the sway, and only one is left to drink.
+- Death: "The leech A goes limp, spits out a penny."
+- **The lesson:** not every telegraph is answered by Guard. Thin the pack before the chorus lands.
+
+Balance (seeds 1-100, full HP, both Salves, Crush and Mend):
+
+| play (autoplay policy) | wins | turns (min/avg/max) | HP left | notes |
+|---|---|---|---|---|
+| focus the weakest, Crush when it kills (`thin`) | 100/100 | 4 / 4.6 / 5 | 41-53 | Drained ×1 |
+| attack only (`attack`) | 100/100 | 6 / 7.8 / 9 | 8-38 (avg 20) | Drained ×1-2 |
+| guard the drink, the tutorial's habit (`smart`) | 99/100 | 10 / 13.7 / 16 | 0-52 (avg 35) | uses both Salves |
+
+The first tuning (each bite drained, bites 2-4) killed 38/100 of the attack-only and guard-habit
+players. A first ordinary fight should hurt the wrong answer, not end the game over it.
+
 ## Starting a battle
 Agreed with world. The battle is a CanvasLayer (layer 10) that draws over the caller and keeps
 running while the caller is paused or disabled.
@@ -147,8 +181,8 @@ characters). `say()` measures each line and warns when one doesn't fit; the wide
 
 ## Testing
 - `godot --headless --path . --script res://tools/smoke_test.gd -- smart` plays one fight and prints
-  every line. Policies: `smart`, `skills`, `learner`, `save`, `spam`, `attack` (what each does is at
-  the top of the file). The summary counts story flags too ("freed in N/100").
+  every line. Policies: `smart`, `skills`, `learner`, `save`, `thin`, `spam`, `attack` (what each
+  does is at the top of the file). The summary counts story flags too ("freed in N/100").
   - `seed=N` replays a fight exactly.
   - `runs=N` prints a balance summary.
   - `troop=host,host` fights a group.
@@ -163,3 +197,6 @@ characters). `say()` measures each line and warns when one doesn't fit; the wide
   more to the wider skill and target submenus. Check that with the first three-enemy fight.
 - **More skills:** one per region, found like the new gestures in `docs/world.md`? To decide with
   world.
+- **HP between fights:** the tutorial leaves the hero with 18-55 HP, and nothing heals him after it.
+  The leech numbers above assume full HP. World should put a rest (or Moth's kettle) between the
+  Host and the leeches.
