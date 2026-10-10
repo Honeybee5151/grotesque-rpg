@@ -34,7 +34,8 @@ Players download the zip once; after that the game updates itself.
   A **new Godot version** can't be delivered this way — that needs players to grab a fresh zip. If you
   change engine version, change it in `release.yml` too.
 - Inside the editor the updater is off. `tools/update_test.sh` tests the whole pipeline against a fake
-  local release (`GODOT=/path/to/godot tools/update_test.sh`).
+  local release (`GODOT=/path/to/godot tools/update_test.sh`; on Windows `tools\check.ps1 -Updater`
+  runs it through Git Bash).
 
 ## The agent team (Windows)
 Four Claude Code sessions (Opus 5.5, max effort) build the game in parallel, one PowerShell window
@@ -54,4 +55,5 @@ The launcher updates itself from GitHub before it starts.
 - `scripts/title.gd`, `scripts/boot.gd`, `scripts/updater.gd` — title screen, update mounting, update download
 - `scripts/sprite_factory.gd` — all pixel art is drawn in code; swap for PNGs any time
 - `release.cfg` — version + repo, stamped by CI (don't hand-edit for releases; tag instead)
-- `tools/` — `smoke_test.gd` (headless autoplay of the fight), updater tests
+- `tools/` — `check.ps1` (every check in one go), `smoke_test.gd` (headless autoplay of the fight),
+  updater tests
