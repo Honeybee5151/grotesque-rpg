@@ -7,7 +7,8 @@ extends RefCounted
 ## pose/flash/shake act on the enemy using the skill (or holding the state), pop is a speech
 ## bubble over the hero. Placeholders: {hero}, {user}, {target}, {name} (the state's holder),
 ## written as names appear mid-sentence ("the Host"); {User}, {Target}, {Name} capitalise the
-## first letter. Numbers: {dmg}, {heal}, {hp}, {mp}, {stacks}. A filled line must fit in 44 chars.
+## first letter. Numbers: {dmg}, {heal}, {hp}, {mp}, {stacks}. A filled line must fit the log
+## window: 214px of the Grotesk pixel font, about 42 characters (say() warns when it doesn't).
 
 const HERO := {
 	"name": "Wanderer",  # placeholder -- rename freely

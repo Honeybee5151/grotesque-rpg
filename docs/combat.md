@@ -110,7 +110,8 @@ in `docs/art.md`). A missing pose falls back to `normal`. Missing art shows as a
 Hurt flashes for 0.3s on a hit.
 
 ## Battle text
-Every line lives in `data.gd` and fits the log window: 44 characters, checked in `say()`.
+Every line lives in `data.gd` and fits the log window: 214px of the Grotesk pixel font (about 42
+characters). `say()` measures each line and warns when one doesn't fit; the widest today is 180px.
 - A line can carry cues: a sound, a pose, a flash, a shake, or the hero's "..." bubble.
 - Names read mid-sentence ("the Host"). `{User}`-style placeholders capitalise the first letter.
 - The format is documented at the top of `data.gd`.
@@ -130,5 +131,5 @@ Every line lives in `data.gd` and fits the log window: 44 characters, checked in
 - **Three wide enemies:** the floating command window covers most of the left one. Fine for two;
   revisit with the first three-enemy fight (smaller monsters, or move the window).
 - **Hero skills** that spend MP are the next step.
-- **Pixel fonts** (monster/misc): popups move to the digits font, and the 44-character check should
-  measure text width instead.
+- **Big-hit digits:** crits and stun hits are yellow but the same size as other numbers, because
+  bitmap fonts don't scale. Monster will draw a taller digits set.
