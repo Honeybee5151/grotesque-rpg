@@ -5,6 +5,7 @@ extends Node2D
 const Sprites := preload("res://scripts/sprite_factory.gd")
 const Updater := preload("res://scripts/updater.gd")
 const HOST := preload("res://art/monsters/host/normal.png")
+const LOGO := preload("res://art/ui/logo.png")
 
 var items: Array = []        # {label, id}
 var cursor := 0
@@ -18,7 +19,7 @@ var updater: Node
 func _ready() -> void:
 	RenderingServer.set_default_clear_color(Color("#07050d"))
 	_build_scene()
-	items = [{"label": "PLAY", "id": "play"}, {"label": "Quit", "id": "quit"}]
+	items = [{"label": "Play", "id": "play"}, {"label": "Quit", "id": "quit"}]
 	_rebuild_menu()
 
 	updater = Updater.new()
@@ -45,13 +46,14 @@ func _build_scene() -> void:
 	host.position = Vector2(160, 63)  # 1x, same spot as in battle (bottom-centre at 160, 122)
 	add_child(host)
 
-	var title := _label(Vector2(8, 6), Vector2(100, 40), 14, Color("#e8d55a"))
-	title.text = "GROTESQUE\nRPG"
-	title.add_theme_color_override("font_outline_color", Color("#2a0818"))
-	title.add_theme_constant_override("outline_size", 3)
-	var sub := _label(Vector2(8, 50), Vector2(100, 12), 7, Color("#8a82b0"))
+	var logo := Sprite2D.new()
+	logo.texture = LOGO
+	logo.centered = false
+	logo.position = Vector2(8, 6)
+	add_child(logo)
+	var sub := _label(Vector2(8, 34), Vector2(100, 10), Color("#8a82b0"))
 	sub.text = "work in progress"
-	_version_label = _label(Vector2(240, 4), Vector2(76, 10), 7, Color("#6a6488"))
+	_version_label = _label(Vector2(240, 4), Vector2(76, 10), Color("#6a6488"))
 	_version_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 
 	panel = Panel.new()
@@ -71,18 +73,18 @@ func _build_scene() -> void:
 	arrow.color = Color("#e8d55a")
 	panel.add_child(arrow)
 	var tw := create_tween().set_loops()
-	tw.tween_property(arrow, "offset:x", 1.5, 0.45)
+	tw.tween_property(arrow, "offset:x", 1.0, 0.45)
 	tw.tween_property(arrow, "offset:x", 0.0, 0.45)
 
-	status_label = _label(Vector2(0, 169), Vector2(320, 10), 7, Color("#8a82b0"))
+	status_label = _label(Vector2(0, 169), Vector2(320, 10), Color("#8a82b0"))
 	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 
-func _label(pos: Vector2, sz: Vector2, font_size: int, col: Color) -> Label:
+# Text uses the theme's pixel font at its own size (theme.tres); never override font_size.
+func _label(pos: Vector2, sz: Vector2, col: Color) -> Label:
 	var l := Label.new()
 	l.position = pos
 	l.size = sz
-	l.add_theme_font_size_override("font_size", font_size)
 	l.add_theme_color_override("font_color", col)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(l)
@@ -99,7 +101,6 @@ func _rebuild_menu() -> void:
 		r.text = items[i]["label"]
 		r.position = Vector2(18, 4 + i * 12)
 		r.size = Vector2(78, 12)
-		r.add_theme_font_size_override("font_size", 10 if i == 0 else 8)
 		r.mouse_filter = Control.MOUSE_FILTER_STOP
 		r.mouse_entered.connect(_set_cursor.bind(i))
 		r.gui_input.connect(_on_row_gui.bind(i))
