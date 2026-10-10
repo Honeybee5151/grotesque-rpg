@@ -113,10 +113,19 @@ func host_comes() -> void:
 	lay_body(fell)
 
 
+## Odo where he fell: two free cells side by side at or next to `c` (never under the hero).
 func lay_body(c: Vector2i) -> void:
-	var at_cell := c if not blocked(c + Vector2i.RIGHT) else c + Vector2i.LEFT
+	var at_cell := c
+	for o: Vector2i in [Vector2i.ZERO, Vector2i.LEFT, Vector2i.DOWN, Vector2i(-1, 1), Vector2i.UP, Vector2i(1, 1), Vector2i(2, 0)]:
+		var a := c + o
+		if not blocked(a) and not blocked(a + Vector2i.RIGHT):
+			at_cell = a
+			break
 	prop(load("res://art/world/odo_dead.png"), at_cell, Vector2i(2, 1))
-	prop(load("res://art/world/frog_spent.png"), at_cell + Vector2i(2, 1) if not blocked(at_cell + Vector2i(2, 1)) else at_cell + Vector2i(0, 1), Vector2i.ONE, false)
+	for o: Vector2i in [Vector2i(2, 1), Vector2i(2, 0), Vector2i(0, 1), Vector2i(-1, 0)]:
+		if not blocked(at_cell + o):
+			prop(load("res://art/world/frog_spent.png"), at_cell + o, Vector2i.ONE, false)
+			break
 	for x in 2:
 		examine[at_cell + Vector2i(x, 0)] = look_odo
 

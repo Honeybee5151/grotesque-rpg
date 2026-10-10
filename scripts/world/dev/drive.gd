@@ -38,6 +38,7 @@ func _initialize() -> void:
 				else:
 					world.flags[f] = true
 	root.add_child(world)
+	current_scene = world
 
 
 func _process(delta: float) -> bool:

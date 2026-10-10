@@ -88,7 +88,7 @@ func build() -> void:
 		for x in range(6, 26):
 			triggers[Vector2i(x, 13)] = odo_calls
 	var waiting: bool = world.flags.get("host_done", false) and not world.flags.has("moth_read")
-	moth = person("res://art/world/moth.png", Vector2i(14, 12) if waiting else MOTH_DOOR,
+	moth = person("res://art/world/moth.png", Vector2i(15, 12) if waiting else MOTH_DOOR,
 		Vector2i.UP if waiting else Vector2i.DOWN)
 	moth.talk = talk_moth
 	landmarks["well"] = Vector2(WELL.x * TILE + TILE, WELL.y * TILE + TILE)
