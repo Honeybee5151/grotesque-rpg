@@ -7,6 +7,9 @@
     autoplay smart    tools/smoke_test.gd -- smart
     autoplay attack   tools/smoke_test.gd -- attack
     autoplay smart troop=host,host   two enemies: the target menu and multi-enemy battles
+    autoplay skills   the Skill submenu, spending MP
+    export            the game.pck players get (export filters, remaps), then boot and the
+                      battle run from it - catches files that work here but don't ship
     updater           tools/update_test.sh through Git Bash (only with -Updater)
 
 .DESCRIPTION
@@ -26,7 +29,7 @@ param([switch]$Updater)
 $Root = Split-Path -Parent $PSScriptRoot
 $Godot = if ($env:GODOT) { $env:GODOT } else { 'godot' }
 # One autoplay per entry: the smoke_test.gd arguments (fights owns the autoplay; they say what to run).
-$Policies = @('smart', 'attack', 'smart troop=host,host')
+$Policies = @('smart', 'attack', 'smart troop=host,host', 'skills')
 
 $ErrorPattern = '^\s*(SCRIPT ERROR|USER ERROR|ERROR):|Parse Error'
 $WarningPattern = '^\s*(USER WARNING|WARNING):'
@@ -38,10 +41,11 @@ $Stop = ''   # set when continuing makes no sense (parse errors)
 function Say([string]$Text, [string]$Color = 'Gray') { Write-Host $Text -ForegroundColor $Color }
 
 # Run a program with a time limit; collect stdout and stderr separately.
-function Invoke-Native([string]$Exe, [string[]]$Arguments, [int]$TimeoutSeconds) {
+function Invoke-Native([string]$Exe, [string[]]$Arguments, [int]$TimeoutSeconds, [string]$WorkDir = '') {
     $resolved = Get-Command $Exe -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
     $psi = New-Object System.Diagnostics.ProcessStartInfo
     $psi.FileName = if ($resolved) { $resolved.Source } else { $Exe }
+    if ($WorkDir) { $psi.WorkingDirectory = $WorkDir }
     $psi.Arguments = ($Arguments | ForEach-Object { if ($_ -match '[\s"]') { '"' + ($_ -replace '"', '\"') + '"' } else { $_ } }) -join ' '
     $psi.UseShellExecute = $false
     $psi.CreateNoWindow = $true
@@ -143,6 +147,22 @@ foreach ($p in $Policies) {
     if ($Stop) { Skip "autoplay $p"; continue }
     $run = Invoke-Native $Godot (@('--headless', '--path', $Root, '--script', 'res://tools/smoke_test.gd', '--') + ($p -split ' ')) 120
     Report "autoplay $p" $run '^=== RESULT:' '^=== RESULT:'
+}
+# The exported game: only resources (plus release.cfg) ship, minus tools/; run it from the pack in an
+# empty folder so nothing from the project folder can stand in for a missing file.
+if ($Stop) { Skip 'export' } else {
+    $tmp = Join-Path ([IO.Path]::GetTempPath()) ('grotesque-check-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
+    New-Item -ItemType Directory -Path $tmp | Out-Null
+    try {
+        $pck = Join-Path $tmp 'game.pck'
+        Report 'export' (Invoke-Native $Godot @('--headless', '--path', $Root, '--export-pack', 'Windows Desktop', $pck) 300)
+        if (Test-Path $pck) {
+            Report 'export: boot' (Invoke-Native $Godot @('--headless', '--main-pack', $pck, '--quit-after', '120') 60 $tmp)
+            Report 'export: battle' (Invoke-Native $Godot @('--headless', '--main-pack', $pck, 'res://main.tscn', '--quit-after', '300') 60 $tmp)
+        }
+    } finally {
+        Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
+    }
 }
 if (-not $Updater) {
     Say ('  -       {0,-30}       (add -Updater when anything near the updater changed)' -f 'updater') DarkGray

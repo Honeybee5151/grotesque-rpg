@@ -13,10 +13,11 @@ extends RefCounted
 const HERO := {
 	"name": "Wanderer",  # placeholder -- rename freely
 	"max_hp": 60,
-	"max_mp": 10,        # unused so far; Drained eats it, skills will spend it
+	"max_mp": 10,        # skills spend it, Drained eats it
 	"atk": 10,
 	"def": 0,
 	"agi": 10,
+	"skills": ["crush", "mend"],  # a caller can bring its own list (context.hero.skills)
 }
 
 const RULES := {
@@ -28,8 +29,9 @@ const RULES := {
 }
 
 # Skills. Damage is either "power" (x the user's attack, rolled, minus the target's defence) or
-# "dmg": [min, max] (flat roll, minus defence). "target": "self" for moves on yourself (the
-# default is one enemy; enemies always aim at the hero). "priority" acts before everyone else.
+# "dmg": [min, max] (flat roll, minus defence). "heal" restores HP. "mp" is the cost. "target":
+# "self" for moves on yourself (the default is one enemy; enemies always aim at the hero).
+# "priority" acts before everyone else.
 # "telegraph" marks the warning move before a big one. "guard_blocks": a guarding target takes
 # nothing, says the "blocked" lines and puts "blocked_user_states" on the user.
 const SKILLS := {
@@ -47,6 +49,22 @@ const SKILLS := {
 		"guard": true,
 		"priority": 1,
 		"lines": [{"say": "{user} braces himself.", "sfx": "guard"}],
+	},
+	# The mute hero's skills are things he does, not words he says. Crush is the punish:
+	# x2, and x4 on a stunned enemy, so it's worth saving for the stun.
+	"crush": {
+		"name": "Crush",
+		"mp": 4,
+		"power": 2.0,
+		"lines": [{"say": "{user} throws his whole weight into it!", "hold": 0.35}],
+		"hit": "{Target} takes {dmg}.",
+	},
+	"mend": {
+		"name": "Mend",
+		"mp": 3,
+		"target": "self",
+		"heal": 16,
+		"lines": [{"say": "{user} presses a hand to his wounds.", "sfx": "heal"}],
 	},
 	# --- the Host: lash -> coil (telegraph) -> latch ---
 	"lash": {
@@ -153,4 +171,5 @@ const TEXT := {
 	"victory": ["Victory."],
 	"defeat": ["{hero} collapses.", "Everything goes quiet."],
 	"flee": ["{hero} backs away into the dark."],
+	"no_mp": ["{User} tries, but he's spent."],
 }
