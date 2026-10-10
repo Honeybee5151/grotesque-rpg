@@ -46,6 +46,8 @@ var muted := false
 var _skip_req := false
 var _cancel_req := false
 var _log_lines: Array[String] = []
+var transcript: Array[String] = []  # every line said this battle (read by tools/smoke_test.gd)
+var _fx_rng := RandomNumberGenerator.new()  # screen shake etc., kept off the battle's RNG
 var _menu_open := false
 var _menu_items: Array = []
 var _menu_cursor := 0
@@ -93,6 +95,7 @@ func _run_game() -> void:
 func _battle() -> void:
 	_reset_battle("sucker_frog")
 	_log_lines.clear()
+	transcript.clear()
 	_refresh_log()
 	await say("A man staggers out of the dark.")
 	await say("Something wet rides his shoulders.")
@@ -325,6 +328,7 @@ func _reset_battle(enemy_id: String) -> void:
 func say(text: String, hold: float = 0.65) -> void:
 	if text.length() > 44:
 		push_warning("message too long for the log window: " + text)
+	transcript.append(text)
 	_log_lines.append("")
 	if _log_lines.size() > 3:
 		_log_lines.pop_front()
@@ -598,7 +602,7 @@ func _hurt_fx() -> void:
 	create_tween().tween_property(flash_rect, "color:a", 0.0, 0.3)
 	var tw := create_tween()
 	for i in 6:
-		tw.tween_property(self, "position", Vector2(randf_range(-3, 3), randf_range(-2, 2)), 0.04)
+		tw.tween_property(self, "position", Vector2(_fx_rng.randf_range(-3, 3), _fx_rng.randf_range(-2, 2)), 0.04)
 	tw.tween_property(self, "position", Vector2.ZERO, 0.04)
 
 
