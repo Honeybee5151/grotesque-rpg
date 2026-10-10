@@ -9,10 +9,13 @@
     autoplay attack   tools/smoke_test.gd -- attack
     autoplay smart troop=host,host   two enemies: the target menu and multi-enemy battles
     autoplay skills   the Skill submenu, spending MP
-    world             scripts/world/dev/world_test.gd: plays the prologue headless, both endings
+    autoplay thin troop=penny_leech x3   a pack: chorus moves, slot variants, no mercy
+    autoplay expert troop=mouther   breaking a telegraph (Crush mid-inhale), the steal
+    world             scripts/world/dev/world_test.gd -- story: both prologue endings, headless (~1 min);
+                      with -Release also the sweep that tries every answer at every prompt (~3 min)
     export            the game.pck players get (export filters, remaps), then boot, the battle
                       and the world run from it - catches files that work here but don't ship
-    updater           tools/update_test.sh through Git Bash (only with -Updater)
+    updater           tools/update_test.sh through Git Bash (with -Updater or -Release)
 
 .DESCRIPTION
   A check fails on a non-zero exit code, a Godot error (SCRIPT ERROR, ERROR:, Parse Error), a run
@@ -24,14 +27,17 @@
   tools\check.ps1             # before "ready to merge", and on every merge
 .EXAMPLE
   tools\check.ps1 -Updater    # also the updater end-to-end test (needs Git for Windows and Python)
+.EXAMPLE
+  tools\check.ps1 -Release    # before a release: everything, the full world sweep and the updater
 #>
 [CmdletBinding()]
-param([switch]$Updater)
+param([switch]$Updater, [switch]$Release)
+if ($Release) { $Updater = $true }
 
 $Root = Split-Path -Parent $PSScriptRoot
 $Godot = if ($env:GODOT) { $env:GODOT } else { 'godot' }
 # One autoplay per entry: the smoke_test.gd arguments (fights owns the autoplay; they say what to run).
-$Policies = @('smart', 'attack', 'smart troop=host,host', 'skills')
+$Policies = @('smart', 'attack', 'smart troop=host,host', 'skills', 'thin troop=penny_leech,penny_leech,penny_leech', 'expert troop=mouther')
 
 $ErrorPattern = '^\s*(SCRIPT ERROR|USER ERROR|ERROR):|Parse Error'
 $WarningPattern = '^\s*(USER WARNING|WARNING):'
@@ -106,7 +112,7 @@ function Report([string]$Name, $Run, [string]$Need = '', [string]$Show = '') {
     $warnings = @(Get-Matches $all $WarningPattern)
     if (($problems | Where-Object { $_ -match 'Parse Error' })) { $script:Stop = "parse errors in $Name" }
 
-    $label = ("{0,-30} {1,3}s" -f $Name, $Run.Seconds)
+    $label = ("{0,-36} {1,3}s" -f $Name, $Run.Seconds)
     $extra = ''
     if ($Show) { $extra = $Run.Out | Where-Object { $_ -match $Show } | Select-Object -Last 1 }
     if ($problems.Count -eq 0) {
@@ -123,7 +129,7 @@ function Report([string]$Name, $Run, [string]$Need = '', [string]$Show = '') {
 }
 
 function Skip([string]$Name) {
-    Say ("  -       {0,-30}       skipped: {1}" -f $Name, $Stop) DarkGray
+    Say ("  -       {0,-36}       skipped: {1}" -f $Name, $Stop) DarkGray
     $script:Failed.Add($Name)
 }
 
@@ -154,14 +160,19 @@ if ($Stop) { Skip 'boot' } else {
     Report 'play' $run '^=== PLAY: res://' '^=== PLAY:'
 }
 foreach ($p in $Policies) {
-    if ($Stop) { Skip "autoplay $p"; continue }
+    # "troop=penny_leech,penny_leech,penny_leech" reads as "troop=penny_leech x3"
+    $label = 'autoplay ' + [regex]::Replace($p, 'troop=([^ ,]+)(,\1)+', { param($m) 'troop=' + $m.Groups[1].Value + ' x' + $m.Value.Split(',').Count })
+    if ($Stop) { Skip $label; continue }
     $run = Invoke-Native $Godot (@('--headless', '--path', $Root, '--script', 'res://tools/smoke_test.gd', '--') + ($p -split ' ')) 120
-    Report "autoplay $p" $run '^=== RESULT:' '^=== RESULT:'
+    Report $label $run '^=== RESULT:' '^=== RESULT:'
 }
 # world owns the playthrough; it prints "=== WORLD: N scenarios, 0 failed" and exits 1 on a miss.
+# Every merge plays the story; a release also sweeps every answer at every prompt.
 if ($Stop) { Skip 'world' } else {
-    $run = Invoke-Native $Godot @('--headless', '--path', $Root, '--script', 'res://scripts/world/dev/world_test.gd') 300
-    Report 'world' $run '^=== WORLD: \d+ scenarios, 0 failed' '^=== WORLD: \d+ scenarios'
+    $worldArgs = @('--headless', '--path', $Root, '--script', 'res://scripts/world/dev/world_test.gd')
+    if (-not $Release) { $worldArgs += @('--', 'story') }
+    $run = Invoke-Native $Godot $worldArgs $(if ($Release) { 900 } else { 300 })
+    Report $(if ($Release) { 'world (story + sweep)' } else { 'world (story)' }) $run '^=== WORLD: \d+ scenarios, 0 failed' '^=== WORLD: \d+ scenarios'
 }
 # The exported game: only resources (plus release.cfg) ship, minus tools/; run it from the pack in an
 # empty folder so nothing from the project folder can stand in for a missing file.
@@ -181,13 +192,13 @@ if ($Stop) { Skip 'export' } else {
     }
 }
 if (-not $Updater) {
-    Say ('  -       {0,-30}       (add -Updater when anything near the updater changed)' -f 'updater') DarkGray
+    Say ('  -       {0,-36}       (add -Updater when anything near the updater changed)' -f 'updater') DarkGray
 } elseif ($Stop) {
     Skip 'updater'
 } else {
     $bash = Find-Bash
     if (-not $bash) {
-        Say ('  FAILED  {0,-30}       Git Bash not found (install Git for Windows)' -f 'updater') Red
+        Say ('  FAILED  {0,-36}       Git Bash not found (install Git for Windows)' -f 'updater') Red
         $Failed.Add('updater')
     } else {
         $script = (Join-Path $Root 'tools/update_test.sh') -replace '\\', '/'

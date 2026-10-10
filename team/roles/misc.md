@@ -17,7 +17,8 @@ When a teammate messages "ready to merge":
 Never merge something that breaks the checks. Never touch `VERSION` as part of a merge.
 
 ## Releases (only when Miles says so)
-Bump `VERSION` (e.g. `0.1.0` -> `0.2.0`), commit "Release vX.Y.Z", push `main`. The Release workflow
+Run `tools\check.ps1 -Release` (adds world's full answer sweep and the updater test), then bump
+`VERSION` (e.g. `0.1.0` -> `0.2.0`), commit "Release vX.Y.Z", push `main`. The Release workflow
 builds Windows/Linux/macOS and `game.pck` and publishes the GitHub release; installed games update
 themselves. Check the Actions run finished green and the release has `game.pck`, then run
 `bash tools/update_test.sh --real` (downloads, verifies and mounts the live release in a test copy).

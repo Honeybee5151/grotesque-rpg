@@ -306,6 +306,8 @@ func _use_skill(user: Battler, id: String, target: Battler) -> void:
 	if sk.has("heal"):
 		var healed := _heal(target, int(sk["heal"]))
 		await _say(_fill(Data.TEXT["heal"], {"heal": healed}))
+	if sk.has("steal_mp"):
+		await _steal(user, target, sk, vars)
 	user.telegraphing = sk.get("telegraph", false)
 	_update_pose(user)
 
@@ -344,6 +346,10 @@ func _strike(user: Battler, target: Battler, id: String, vars: Dictionary) -> vo
 	vars["dmg"] = _hurt(target, d, crit or exposed)
 	if line != "":
 		await _say(_fill(line, vars) + (Data.TEXT["guarded"] if guarded else ""))
+	var brk: Dictionary = target.data.get("break", {})
+	if target.telegraphing and target.alive() and id in brk.get("by", []):
+		target.telegraphing = false
+		await _add_state(target, brk.get("state", "stunned"), 1)
 	if sk.get("states_once", false):
 		if _states_landed.has(id):
 			return
@@ -386,6 +392,23 @@ func _use_item(user: Battler, id: String) -> void:
 		parts.append(Data.STATES[s]["cure"])
 	if not parts.is_empty():
 		await _say(" ".join(parts))
+
+
+# Drinks MP (or HP when there's none) out of the target and heals the user by what it took.
+func _steal(user: Battler, target: Battler, sk: Dictionary, vars: Dictionary) -> void:
+	var mp := mini(target.mp, int(sk["steal_mp"]))
+	if mp > 0:
+		target.mp -= mp
+		view.refresh_status(hero)
+		if target.is_hero:
+			view.popup_hero("-%d" % mp, Color("#5a9bff"))
+		vars["mp"] = mp
+		vars["heal"] = _heal(user, mp)
+		await _say(_fill(sk["steal_mp_hit"], vars))
+	elif sk.has("steal_hp"):
+		vars["hp"] = _hurt(target, int(sk["steal_hp"]))
+		vars["heal"] = _heal(user, vars["hp"])
+		await _say(_fill(sk["steal_hp_hit"], vars))
 
 
 # Heals up to max HP and shows it; returns how much it healed.
