@@ -12,6 +12,7 @@ const Lighting := preload("res://scripts/world/lighting.gd")
 const HERO_SHEET := "res://art/world/hero.png"
 
 var world: Node               # the World root
+var id := ""                  # the map's name, as World.go() knows it
 var player: Player
 var ground: TileMapLayer
 var things: Node2D            # props and people, drawn in y order
@@ -186,6 +187,19 @@ func landmark(id: String) -> Variant:
 	if typeof(l) == TYPE_OBJECT:
 		return l.position if is_instance_valid(l) else null   # someone who has left the map
 	return l
+
+
+## A fight that can be lost. On a loss the hero wakes whole at `wake` (a salt circle) and the map
+## starts over around him, its encounters with it. Returns the battle's outcome.
+func fight(enemy_ids: Array, context := {}, wake := "") -> String:
+	var result: Dictionary = await world.battle(enemy_ids, context)
+	var outcome: String = result.get("outcome", "")
+	if outcome == "lost":
+		await world.cover(0.8)
+		await world.narrate("The fen nearly keeps him a second time.")
+		world.hero_state = {}
+		world.go(id, wake)
+	return outcome
 
 
 ## Pixel centre of a cell, for lights.

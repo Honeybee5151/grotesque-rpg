@@ -28,8 +28,14 @@ the end of the spring rains, where the hungry are fed and never full* (Plenty) -
 line carries a name the fen has washed away. His? Nobody can say, least of all him.
 
 **The road there** (challenges and puzzles; each a place to meet people and test the gestures):
-- The drowned road north out of Hollowell, through fog: **the Mouther** (a bog body that lost its voice
-  too), **Penny Leeches** in the shallows (they swallowed Hollowell's wishing pennies).
+- **The drowned road - built** (`scripts/world/maps/drowned_road.gd`): planks and stilts north of
+  Hollowell in morning fog. A **salt circle** at the fork (a Guild waystation: rest, and where he wakes
+  if a fight goes wrong). **Old Gristle** on a mile-stone, thirty Examinations failed, a mouth under his
+  coat that laughs a beat after he does: he guesses the riddle for you (Plenty), offers eel-wine that
+  costs 15 HP, and swears the left fork is shorter. The left is the shallows, where **Penny Leeches**
+  wait (they ate Hollowell's wishing pennies; he gets a handful). The right is the old road, whose
+  rotten planks give way (they show it: darker, mossier, broken). Both meet where **the Mouther** lies in
+  the peat, face to the sky, its jaw working without a sound.
 - **Tallowmouth**, a dying whaling hamlet on the shore of **the Black Mere**: rendering vats, harpoons
   on every wall, whalers' widows. Hollowell's lamps burn the whale oil it renders - the fen's one warm
   colour is bought with blood. A rest here (tea, a blanket) before the crossing.
@@ -40,8 +46,13 @@ line carries a name the fen has washed away. His? Nobody can say, least of all h
   it, that never died and now gives them back. It hunts whoever carries a lamp - and he carries Odo's.
   The ferrywoman tells him to put it out: douse it and cross blind (it circles first), or keep it lit
   (it finds him at once). The fight is on the barge's deck (battle bg "mere", flag `lamp_lit`).
+- **Plenty** (carnival). Whatever eats the Ever-Sow's meat grows back; salt stops it. Plenty's first
+  butcher-priests salted her wounds to keep her from overgrowing the town - they became the Salt Guild,
+  which is why the Examination comes home here. **The Second Chin**, an alderman whose double chin runs
+  him, guards the gate: "Say something I haven't heard." **Gorgers** in the streets.
 - Plenty's hidden door: the Examination is entered through a butcher's that sells the Ever-Sow's
-  meat. You order "the cut that grows back" - without words.
+  meat. You order "the cut that grows back" - without words. The door opens into the holy pig: **the
+  Long Swallow** is her gullet.
 - The Brood (the fen's spawn-mother under the well) waits for later: an optional descent, or a return.
 
 **The Examination** (hundreds of applicants with numbered salt-tags; he can't give a name, so the
@@ -55,8 +66,9 @@ registrar writes one for him). Contestants, each a different relation to mouths 
 - **The Lady and her Rider**, who lets a rider ride her by choice. They take turns speaking. The
   Examination's terror.
 Phases (a proposal, each its own examiner and test): the Long Swallow (an endless tunnel under Plenty -
-keep up or drop), the Tasting (hunt and cook for a glutton examiner), the Hush crossing (through the
-wood where silence is consent), the Tower of Tongues in Clamour (doors that open to words: make others
+the Ever-Sow's gullet; keep up or drop), the Tasting (bring a glutton examiner a cut of her - and Old
+Gristle provokes her into a rampage to sink the rookies: subdue her, salting each wound while it knits;
+she is holy, never killed), the Hush crossing (through the wood where silence is consent), the Tower of Tongues in Clamour (doors that open to words: make others
 speak for you), the Hunt (take another applicant's tag), and **the Concession**: duels won when your
 opponent *says* "I yield" - which the hero can never say.
 

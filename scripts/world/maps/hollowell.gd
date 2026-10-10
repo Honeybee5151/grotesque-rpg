@@ -518,6 +518,7 @@ func dawn_scene() -> void:
 	await world.caption("Something stiff in the pocket, folded small.", 2.0)
 	world.box.close()
 	await world.picture("res://art/world/poster.png")
+	world.items["poster"] = "the Salt Guild's poster"
 	if read == "blame":
 		await world.narrate("There was a name written on it once. The fen washed it away.")
 		await world.say("A voice", "...And bind those hands before they fester. Moss, tight, like this.", 0.7)
@@ -570,10 +571,7 @@ func leave_hollowell() -> void:
 	await world.narrate("He takes the north road out of Hollowell, toward the end of the rains.")
 	if world.flags.get("moth_read", "") != "blame":
 		await world.say(MOTH, "DROWNED MAN! COME BACK A HUNTER!", MOTH_PITCH)
-	await world.cover(1.2)
-	await world.narrate("Hollowell. The end of the beginning.")
-	await world.narrate("Next: the road to the Salt Examination.")
-	get_tree().change_scene_to_file("res://title.tscn")
+	world.go("drowned_road", "south")
 
 
 func north_fog() -> void:

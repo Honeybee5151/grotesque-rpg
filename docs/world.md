@@ -95,7 +95,12 @@ saturated. Seeds: the Gossip (a mould made of whispers), wall-mouths, the Herald
   `var a := await world.ask(point_at)` - the gesture menu; the hero acts it out and you get
   `{"g": "nod"|"shake"|"shrug"|"silent"}`, `{"g": "point", "at": id}` or `{"g": "show", "item": id}`.
 - **Night**: `map.darken(ambient)` + `light.add(pos, radius, strength, flicker)` - four flat bands
-  with ordered dithering, multiplied over the map (`lighting.gd`).
+  with ordered dithering, multiplied over the map (`lighting.gd`); `darken(1.0, tint)` is daylight
+  with a cast (the grey morning). **Fog**: `fog.gd`, drifting dithered wisps (the drowned road).
+- **Fights that can be lost**: `await map.fight(ids, context, wake_spawn)` - on a loss he wakes whole
+  at `wake_spawn` (a salt circle) and the map starts over around him. Salt circles are rest points.
+- **Skills and items**: `world.skills` (Crush; Mend from the dawn) goes into every fight;
+  `world.items` is what Show offers (the poster, Odo's lantern, wishing pennies).
 - **Checking**: `godot --headless --path . --script res://scripts/world/dev/world_test.gd` plays the
   prologue's endings through (part of `tools/check.ps1`). `scripts/world/dev/drive.gd` plays any key
   script with a window and saves screenshots; it can jump in with flags (see its header).
