@@ -154,7 +154,7 @@ class Group:
                     d, m = di, np.full(len(P), mat)
                 else:
                     d, m = smin_m(d, m, di, mat, k)
-            else:
+            elif d is not None:     # a carve with nothing before it has nothing to cut
                 d, m = ssub_m(d, m, di, mat, k)
         return d, m
 
@@ -220,6 +220,8 @@ class Scene:
         m = None
         for g in self.groups:
             dg, mg = g.eval(P)
+            if dg is None:          # a group that ended up with no shapes
+                continue
             if d is None:
                 d, m = dg, mg
             else:

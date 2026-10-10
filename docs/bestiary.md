@@ -120,7 +120,9 @@ Its old eye is amber, the colour of lamplight: lamps burn whale oil. That eye is
 Hollowell's lanterns burn whale oil rendered at Tallowmouth, a dying whaling hamlet on the Mere's
 shore: the fen's one warm colour is bought with its blood, so it hunts whoever carries a lamp.
 
-**Hook: it gives them back** (proposal for `@fights`). It wrenches a harpoon out of its own hide and
+**Hook: it gives them back** (as `@fights` built it: Wrench opens a Wounded stack on itself,
++25% damage taken each, up to 5; a guarded throw glances off and it overbalances, stunned; after five
+harpoons it gapes and bites). It wrenches a harpoon out of its own hide and
 clamps it in its jaw (telegraph), then flings it: a heavy hit, and the harpoon stays in the hero,
 bleeding him the way it has bled for years. Guard: it glances off. Every harpoon it gives back
 leaves a wound open in its hide, so the more it throws, the softer it gets: bait the throws, brace,
@@ -130,7 +132,9 @@ strike the wounds. Its hide holds only so many.
 
 **Sprites.** `art/monsters/old_iron/`, 104x118: `normal` (spyhopping, watching), `telegraph` (it
 rears back, a harpoon pulled from its own hide clamped across its jaw, the wound bleeding), `hurt`
-(it rolls away, eye shut). It stands in its own patch of water. Source: `tools/art/old_iron.py`;
+(it rolls away, eye shut), `stunned` (overbalanced after a guarded throw: tipped over, wallowing,
+eye rolled), and for the empty-hide phase `spent` (resting: no harpoons left, a wound where each
+was) and `gape` (the bite telegraph: jaw swung wide, the mouth carved open and pink). It stands in its own patch of water. Source: `tools/art/old_iron.py`;
 sheet: `art/concepts/old_iron_poses.png`.
 
 **Placement** (`@world`). The Black Mere, the open black water between the Sallow Fen and Plenty,
