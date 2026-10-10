@@ -11,10 +11,11 @@
     autoplay skills   the Skill submenu, spending MP
     autoplay thin troop=penny_leech x3   a pack: chorus moves, slot variants, no mercy
     autoplay expert troop=mouther   breaking a telegraph (Crush mid-inhale), the steal
-    world             scripts/world/dev/world_test.gd: plays the prologue headless, both endings
+    world             scripts/world/dev/world_test.gd -- story: both prologue endings, headless (~1 min);
+                      with -Release also the sweep that tries every answer at every prompt (~3 min)
     export            the game.pck players get (export filters, remaps), then boot, the battle
                       and the world run from it - catches files that work here but don't ship
-    updater           tools/update_test.sh through Git Bash (only with -Updater)
+    updater           tools/update_test.sh through Git Bash (with -Updater or -Release)
 
 .DESCRIPTION
   A check fails on a non-zero exit code, a Godot error (SCRIPT ERROR, ERROR:, Parse Error), a run
@@ -26,9 +27,12 @@
   tools\check.ps1             # before "ready to merge", and on every merge
 .EXAMPLE
   tools\check.ps1 -Updater    # also the updater end-to-end test (needs Git for Windows and Python)
+.EXAMPLE
+  tools\check.ps1 -Release    # before a release: everything, the full world sweep and the updater
 #>
 [CmdletBinding()]
-param([switch]$Updater)
+param([switch]$Updater, [switch]$Release)
+if ($Release) { $Updater = $true }
 
 $Root = Split-Path -Parent $PSScriptRoot
 $Godot = if ($env:GODOT) { $env:GODOT } else { 'godot' }
@@ -163,9 +167,12 @@ foreach ($p in $Policies) {
     Report $label $run '^=== RESULT:' '^=== RESULT:'
 }
 # world owns the playthrough; it prints "=== WORLD: N scenarios, 0 failed" and exits 1 on a miss.
+# Every merge plays the story; a release also sweeps every answer at every prompt.
 if ($Stop) { Skip 'world' } else {
-    $run = Invoke-Native $Godot @('--headless', '--path', $Root, '--script', 'res://scripts/world/dev/world_test.gd') 300
-    Report 'world' $run '^=== WORLD: \d+ scenarios, 0 failed' '^=== WORLD: \d+ scenarios'
+    $worldArgs = @('--headless', '--path', $Root, '--script', 'res://scripts/world/dev/world_test.gd')
+    if (-not $Release) { $worldArgs += @('--', 'story') }
+    $run = Invoke-Native $Godot $worldArgs $(if ($Release) { 900 } else { 300 })
+    Report $(if ($Release) { 'world (story + sweep)' } else { 'world (story)' }) $run '^=== WORLD: \d+ scenarios, 0 failed' '^=== WORLD: \d+ scenarios'
 }
 # The exported game: only resources (plus release.cfg) ship, minus tools/; run it from the pack in an
 # empty folder so nothing from the project folder can stand in for a missing file.
