@@ -33,7 +33,8 @@ world of wonderfully grotesque monsters. **Miles** is the director: big creative
   - Battle autoplay: `godot --headless --path . --script res://tools/smoke_test.gd -- smart` (and `-- attack`)
   - Play: `godot --path .`
 - All the merge checks in one go: `tools\check.ps1` (import, every script parses, boot to the title,
-  both autoplays; `-Updater` adds the updater test). Exits 1 on any failure.
+  the battle autoplays, and the exported game.pck run on its own, which catches files that work here
+  but don't ship; `-Updater` adds the updater test). Exits 1 on any failure.
 - Art: `python tools/art/host_concepts.py <outdir> a b c` (numpy + pillow);
   `python tools/art/grid.py in.png out.png x0 y0 x1 y1 scale` to read exact pixel coordinates.
 - To show Miles an image, save it and open it: `Start-Process <path.png>`.

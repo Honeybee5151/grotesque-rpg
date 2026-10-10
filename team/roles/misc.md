@@ -9,8 +9,9 @@ You work in the main checkout on the `main` branch.
 When a teammate messages "ready to merge":
 1. In your checkout: `git merge team/<role>` (local branches are shared by every checkout, no fetch
    needed). Resolve small conflicts yourself; bounce real design conflicts back to the owners.
-2. Run the checks: `tools\check.ps1` (import, every script parses, boot, both battle autoplays;
-   add `-Updater` if anything near the updater changed). Run the game when the change is visible.
+2. Run the checks: `tools\check.ps1` (import, every script parses, boot, the battle autoplays, the
+   exported game; add `-Updater` if anything near the updater changed). Run the game when the change
+   is visible.
 3. Commit the merge, push `main`, and message everyone in one line what landed so they can
    `git merge main`.
 Never merge something that breaks the checks. Never touch `VERSION` as part of a merge.
