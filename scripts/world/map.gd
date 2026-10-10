@@ -182,8 +182,8 @@ func shake(px: float, sec: float) -> void:
 ## Where a point-at target is, or null if it has no place on this map.
 func landmark(id: String) -> Variant:
 	var l: Variant = landmarks.get(id)
-	if l is Node2D:
-		return l.position if is_instance_valid(l) else null
+	if typeof(l) == TYPE_OBJECT:
+		return l.position if is_instance_valid(l) else null   # someone who has left the map
 	return l
 
 
