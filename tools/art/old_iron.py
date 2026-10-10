@@ -77,13 +77,11 @@ def build(pose):
         return (q[0] + P.get("dx", 0), q[1] + P["dy"], q[2])
 
     S.group()
-    S.ell((52, 113, 0), (52, 2.6, 22), m.water)
-
-    S.group()
     body_c, body_r = (56, 64, -8), (24, 54, 21)
     S.ell(T(body_c), body_r, m.whale, rot=(0, 0, P["lean"]))
     S.ell(T((52, 38, 4)), (21, 30, 15), m.whale, k=6.0, rot=(0, 0, P["lean"]))
     S.ell(T((51, 17, -2)), (24, 9, 19), m.whale, k=7.0, rot=(0, 0, P["lean"]))
+    S.ell(T((56, 118, -6)), (26, 12, 20), m.whale, k=6.0, rot=(0, 0, P["lean"]))   # broad under the water
     S.ell((26, 106, 6), (11, 3, 5), m.whale, k=2.0, rot=(0, 0, -22))
     S.carve_ell(T((37, 74, 14)), (3.0, 30, 6), k=1.0, rot=(0, 0, P["lean"] + 5))
     if P["jaw"] == "gape":
@@ -208,10 +206,15 @@ def build(pose):
             x, y = int(qx + 3 * np.cos(a)), int(qy + 3 * np.sin(a))
             if R.on(x, y, m.whale):
                 R.px(x, y, "#3c4856")
-    # foam where it breaks the water
-    for x in range(4, 100):
-        if (x * 13) % 7 < 3:
-            R.px(x, 110 + (x % 3 == 0), FOAM if (x * 5) % 4 else FOAM_DK)
+    # where it breaks the water: a churn of foam across its base (the backdrop is the water)
+    for y in range(H - 6, H):
+        xs = [x for x in range(W) if R.code[y, x] >= 0]
+        if not xs:
+            continue
+        j0, j1 = (y * 5) % 4, (y * 3) % 5           # ragged ends, not a ruled band
+        for x in range(min(xs) - 1 - j0, max(xs) + 2 + j1):
+            if 0 <= x < W and ((x * 7 + y * 3) % 5 < 2 or y >= H - 2):
+                R.px(x, y, FOAM if (x + y) % 3 else FOAM_DK)
     return R
 
 
