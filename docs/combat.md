@@ -104,11 +104,14 @@ battle.queue_free()
 ## Enemy art
 `art/monsters/<sprite>/normal.png` and `telegraph.png`, plus optional `stunned.png` and `hurt.png`.
 All are at 1x on one canvas of up to 104×118, standing on its bottom row, and drawn with the
-bottom-centre at (160,122). Several enemies stand 104px apart, centred on x=160. A missing pose
-falls back to `normal`. Missing art shows as a magenta square. Hurt flashes for 0.3s on a hit.
+bottom-centre on the ground line y=122. A formation stands canvas by canvas, 4px apart, centred as a
+group on x=160; it has to fit in 320px. Monster's budgets: solo 104 wide, pairs 96, trios 80 (also
+in `docs/art.md`). A missing pose falls back to `normal`. Missing art shows as a magenta square.
+Hurt flashes for 0.3s on a hit.
 
 ## Battle text
-Every line lives in `data.gd` and fits the log window: 44 characters, checked in `say()`.
+Every line lives in `data.gd` and fits the log window: 214px of the Grotesk pixel font (about 42
+characters). `say()` measures each line and warns when one doesn't fit; the widest today is 180px.
 - A line can carry cues: a sound, a pose, a flash, a shake, or the hero's "..." bubble.
 - Names read mid-sentence ("the Host"). `{User}`-style placeholders capitalise the first letter.
 - The format is documented at the top of `data.gd`.
@@ -128,5 +131,5 @@ Every line lives in `data.gd` and fits the log window: 44 characters, checked in
 - **Three wide enemies:** the floating command window covers most of the left one. Fine for two;
   revisit with the first three-enemy fight (smaller monsters, or move the window).
 - **Hero skills** that spend MP are the next step.
-- **Pixel fonts** (monster/misc): popups move to the digits font, and the 44-character check should
-  measure text width instead.
+- **Big-hit digits:** crits and stun hits are yellow but the same size as other numbers, because
+  bitmap fonts don't scale. Monster will draw a taller digits set.

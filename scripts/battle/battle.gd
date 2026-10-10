@@ -348,7 +348,7 @@ func _tick(b: Battler, s: String, st: Dictionary) -> void:
 	var mp_loss := mini(b.mp, n * int(st.get("tick_mp", 0)))
 	b.mp -= mp_loss
 	if b.is_hero:
-		view.popup_hero("-%d" % lost, Color("#ff9ab8"), 10)
+		view.popup_hero("-%d" % lost, Color("#ff9ab8"))
 	else:
 		view.popup_enemy(b, "-%d" % lost, Color("#ff9ab8"))
 	view.refresh_status(hero)
