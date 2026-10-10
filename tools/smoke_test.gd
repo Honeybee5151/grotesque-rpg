@@ -7,10 +7,11 @@ extends SceneTree
 ## "spam" Crushes whenever it can afford to, otherwise attacks;
 ## "save" plays to free the Host's man: it never lands a blow that could kill outside a stun, and
 ## Crushes the stun; "learner" plays like "skills" but misses the first telegraph (it only starts
-## guarding once it has been Drained);
+## guarding once it has been Drained); "thin" focuses the weakest enemy and Crushes whenever that
+## kills (a pack's answer), never guarding;
 ## "attack" only ever attacks: it always gets Drained, and in the tutorial mercy (1 HP floor)
 ## catches it now and then -- the summary counts how often.
-## Any policy aims at a stunned enemy when it has a choice.
+## Any policy aims at a stunned enemy when it has a choice, else at the weakest.
 ## Options: seed=N (first seed, default 1); runs=N (battles on seeds N, N+1, ..., then a balance
 ## summary); troop=host,host (enemy ids); log=1/0 (every line of every battle, default: on for a
 ## single battle). The same seed replays the same fight, so a refactor can be diffed line by line.
@@ -139,12 +140,13 @@ func _decide() -> void:
 	elif first is String:
 		_pick(want)  # the item or skill menu
 	else:
-		# A target menu: a stunned enemy if there is one, else the leftmost standing.
+		# A target menu: a stunned enemy if there is one, else the weakest.
 		v.menu_cursor = 0
 		for i in v.menu_items.size():
-			if v.menu_items[i]["value"].stacks("stunned") > 0:
+			var e = v.menu_items[i]["value"]
+			var best = v.menu_items[v.menu_cursor]["value"]
+			if e.stacks("stunned") > best.stacks("stunned") or (e.stacks("stunned") == best.stacks("stunned") and e.hp < best.hp):
 				v.menu_cursor = i
-				break
 		v.action("ok")
 
 
@@ -167,6 +169,12 @@ func _choose() -> String:
 		"spam":
 			if _affords("crush"):
 				return "skill:crush"
+		"thin":
+			var crush := roundi(Data.HERO["atk"] * h.atk_mult() * float(Data.SKILLS["crush"]["power"]))
+			if _affords("crush") and battle.enemies.any(func(e) -> bool: return e.alive() and e.hp <= crush):
+				return "skill:crush"
+			if h.stacks("drained") > 1 and salves > 0:
+				return "item:salve"
 		"save":
 			if telegraph:
 				return "guard"

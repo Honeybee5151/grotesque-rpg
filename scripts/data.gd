@@ -33,7 +33,10 @@ const RULES := {
 # "self" for moves on yourself (the default is one enemy; enemies always aim at the hero).
 # "priority" acts before everyone else.
 # "telegraph" marks the warning move before a big one. "guard_blocks": a guarding target takes
-# nothing, says the "blocked" lines and puts "blocked_user_states" on the user.
+# nothing, says the "blocked" lines and puts "blocked_user_states" on the user. "chorus": when a
+# pack uses it in the same round, its lines are said once and their cues move them all together
+# ("lines_alone" instead when only one is left). "states_once": its states land once a round,
+# from the first hit, however many of the pack bite.
 const SKILLS := {
 	# --- the hero ---
 	"attack": {
@@ -89,6 +92,27 @@ const SKILLS := {
 		"guard_blocks": true,
 		"blocked": [{"say": "It slaps his raised arms and slips off!", "sfx": "guard", "shake": true}],
 		"blocked_user_states": {"stunned": 1},
+	},
+
+	# --- Penny Leeches: nip, nip... then all rear up as one (telegraph) and all latch at once ---
+	"nip": {
+		"dmg": [1, 3],
+		"hit": "{User} nips: {dmg} damage.",
+	},
+	"sway": {
+		"telegraph": true,
+		"chorus": true,
+		"lines": [{"say": "The leeches rear up as one, suckers wide.", "pose": "telegraph", "sfx": "coil"}],
+		"lines_alone": [{"say": "{User} rears up, sucker wide.", "pose": "telegraph", "sfx": "coil"}],
+	},
+	"drink": {
+		"chorus": true,
+		"lines": [{"say": "They drop onto {target} together!", "hold": 0.4}],
+		"lines_alone": [],
+		"dmg": [2, 4],
+		"states": {"drained": 1},
+		"states_once": true,  # the chorus drains once a round; it builds the longer the pack lives
+		"hit": "{User} bites in: {dmg} damage.",
 	},
 }
 
@@ -172,6 +196,20 @@ const ENEMIES := {
 				"lines": ["The frog peels away, spent. The man falls.", "He's still breathing."],
 			},
 		},
+	},
+	# The fen's first ordinary fight, a pack of three: thin the pack before the chorus latches.
+	# 20 HP: a Crush (exactly 20) kills one outright, an Attack (at most 18) never does. Guard only
+	# halves the latch; Drained still lands.
+	"penny_leech": {
+		"name": "the leech",
+		"sprite": "penny_leech",
+		"max_hp": 20,
+		"def": 0,
+		"agi": 8,
+		"ai": "cycle",
+		"pattern": ["nip", "sway", "drink"],
+		"intro": ["Leeches slop up out of the black water.", "Pennies glint in their skin."],
+		"death": ["{User} goes limp, spits out a penny."],
 	},
 }
 

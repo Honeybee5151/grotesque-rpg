@@ -23,7 +23,8 @@ const ENEMY_POPUP_Y := 50.0
 const MENU_LEFT := 4.0
 const MENU_BOTTOM := 120.0
 # art/monsters/<sprite>/<pose>.png at 1x, all on the same canvas (up to 104x118) and standing on
-# its bottom row. Missing poses fall back to normal.
+# its bottom row. Missing poses fall back to normal. In a pack, the n-th member with that sprite
+# takes <pose>_<n>.png when there is one (normal_2, normal_3...), so they aren't clones.
 const POSES := ["normal", "telegraph", "stunned", "hurt"]
 
 const SHADER := """
@@ -76,9 +77,12 @@ func build(bg: String, hero: Battler, enemies: Array) -> void:
 	_shader.code = SHADER
 	# Canvases side by side, GAP apart, the whole formation centred.
 	var poses: Array = []
+	var nth := {}
 	var total := GAP * (enemies.size() - 1)
 	for e in enemies:
-		poses.append(_load_poses(e))
+		var art: String = e.data.get("sprite", e.id)
+		nth[art] = nth.get(art, 0) + 1
+		poses.append(_load_poses(art, nth[art]))
 		total += poses.back()["normal"].get_width()
 	var left := floorf(160.0 - total / 2.0)
 	for i in enemies.size():
@@ -161,13 +165,13 @@ func popup_enemy(b: Battler, text: String, col: Color) -> void:
 	_popup(text, _enemy_popup_pos(b), col)
 
 
-func _load_poses(b: Battler) -> Dictionary:
-	var art: String = b.data.get("sprite", b.id)
+func _load_poses(art: String, nth: int) -> Dictionary:
 	var poses := {}
 	for pose in POSES:
-		var path := "res://art/monsters/%s/%s.png" % [art, pose]
-		if ResourceLoader.exists(path):
-			poses[pose] = load(path)
+		for path in ["res://art/monsters/%s/%s_%d.png" % [art, pose, nth], "res://art/monsters/%s/%s.png" % [art, pose]]:
+			if ResourceLoader.exists(path):
+				poses[pose] = load(path)
+				break
 	if not poses.has("normal"):
 		push_warning("no art/monsters/%s/normal.png, drawing a placeholder" % art)
 		var img := Image.create_empty(24, 24, false, Image.FORMAT_RGBA8)
