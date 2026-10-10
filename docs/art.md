@@ -27,7 +27,9 @@ Lessons from redrawing the Host. Read before drawing anything.
 2. Render: the raymarcher quantizes lighting onto the ramps, adds cast shadows, ambient occlusion,
    wet specular, depth-edge lines, coloured outlines and orphan-pixel cleanup.
 3. Hand-paint details on top (eyes, teeth, veins, tears, drool, warts) at exact coordinates.
-4. Judge it on the cave background at battle scale, never only zoomed in.
+4. Judge it on the cave background at battle scale, never only zoomed in. Once it's wired in, look at
+   it in the running scene: `godot --path . --script res://tools/art/capture.gd -- res://title.tscn
+   out.png` saves exactly what the window shows.
 
 ## Battlers
 - Canvas up to 104x118, bottom-centred; shown centred at (160, 63); the battle windows cover y >= 124.
