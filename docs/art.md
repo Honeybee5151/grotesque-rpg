@@ -60,6 +60,10 @@ Lessons from redrawing the Host. Read before drawing anything.
   windows; the command window over a trio's left member is a battle-UI problem (`@fights`).
 - Each monster gets a `normal` pose and a `telegraph` pose (the warning before its big move), and
   optionally `hurt`. Telegraphs must read in one glance: change the silhouette, not just a colour.
+- **Packs:** identical clones in a row look cheap. Give pack members variants (`normal_2.png`,
+  `normal_3.png`; a member takes the one for its formation slot, else `normal.png`), and keep a shared
+  move's telegraph identical on purpose: a pack snapping into one pose reads as unison (Penny Leeches).
+- Commit each sprite's `.import` with it: every `.import` is tracked, so UIDs match across checkouts.
 - Make poses parameters of one sculpt (head/limb frames, a lift, named arm variants), not separate
   drawings - see `tools/art/host.py`. The design and the light stay consistent across poses.
 - Show Miles 2-3 options as one labelled sheet before polishing one. Concepts and sheets go in
