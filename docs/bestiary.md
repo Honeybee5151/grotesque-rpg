@@ -150,6 +150,7 @@ across its belly - mouths budding where mouths shouldn't. Pink and greasy, almos
 accent: the belly-mouth.
 
 **Lore.** It ate the holy pig's meat and grew back fatter every time; now it can't stop.
+Placement (`@world`): Plenty's common pack monster, in the streets and in the Long Swallow.
 
 **Hook: it eats until it can't move.** Its telegraph is a feast: it shovels food into both mouths
 and heals. Then it puts itself out - bloated, it loses its next action and takes double, so a Crush
@@ -172,7 +173,9 @@ His own little face, frightened, under a powdered wig - and under it a double ch
 of its own, beady and sneering, that does the talking now. Focal accent: the chin's mouth.
 
 **Lore.** He ate at the holy pig's table every feast day, and what grew back grew a mind of its own.
-He hasn't finished a sentence in years; it finishes them for him.
+He hasn't finished a sentence in years; it finishes them for him. Placement (`@world`): the
+alderman at Plenty's gate, an early fight. He stops applicants with "Say something I haven't heard."
+- which the mute hero can't.
 
 **Hook: the critic.** It remembers what the hero did last round, and says so - "It eyes your raised
 arms, bored." (telegraph: the knowing look). If he does the same thing again that round, it says
@@ -194,7 +197,14 @@ gold ring through her snout, a butcher's cleaver left in her back. Her flanks ar
 butcher's slabs down to raw meat, budding back. Focal accent: the raw red of the cuts.
 
 **Lore.** Plenty is fed by her: carve what you like, it grows back by morning. Whatever ate of her
-grows back too - which is why salt, and the Salt Guild, matter here.
+grows back too. Plenty's first butcher-priests salted her wounds to keep her from overgrowing the
+town; they became the Salt Guild, which is why the Examination comes home to Plenty. The Long
+Swallow is her gullet: the butcher's door opens into the holy pig.
+
+**Placement** (`@world`). She is never killed - she's holy. In the Tasting, Old Gristle provokes her
+to sink the rookies (as he has for thirty years) and she rampages through the Tasting hall
+swallowing applicants. The fight is to subdue her; victory is "The Ever-Sow lies down, salted and
+sighing" (her `stunned` pose), and the gourmet examiner is delighted by perfectly salted meat.
 
 **Hook: it grows back.** Her wounds knit (telegraph: she arches, snout up, new flesh swelling out of
 the cuts like dough), and next round she regrows a great heal. Throw Salt on her while she knits and
