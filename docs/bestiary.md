@@ -38,8 +38,8 @@ well, copper catching the light: the focal accent.
 leeches ate every one, and now the water tastes of them.
 
 **Hook: the chorus.** Each leech nips on its own. Then all three rear up into the *same* pose, suckers
-flared (telegraph), and next round they all latch at once, each its own hit plus Drained. Guard only
-halves it. Kill one during the sway and the chorus is a voice short. A Crush kills a leech outright
+flared (telegraph), and next round they all latch at once, each its own hit; Drained lands once per
+drink round (once per leech was too harsh for a first fight). Guard only halves it. Kill one during the sway and the chorus is a voice short. A Crush kills a leech outright
 (about 20 HP), so the lesson is **thinning a pack**, and Mend/Salve after. Numbers: `@fights`.
 
 **Flavour.** Dread, with a sickly glint of copper.
