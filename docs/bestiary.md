@@ -141,3 +141,27 @@ sheet: `art/concepts/old_iron_poses.png`.
 crossed by night on the ferrywoman's barge: the Mere's boss, after the Mouther and the leeches. She
 tells the hero to put Odo's lantern out - douse it and cross blind, or keep it lit and Old Iron
 comes. The battle is on the barge's deck at night: black water, fog, the barge's lantern swinging.
+
+## Plenty (region 2) - concepts, not final
+
+world's region 2: the mouth that **gorges**, carnival - bodies overflowing, almost funny, saturated
+(roast reds, yolk yellows, pinks), lit warmer and fuller than the fen (`carnival_light`). A regional
+idea: whatever ate the Ever-Sow's meat grows back, and **salt** stops it - the hero is applying to the
+Salt Guild. Concepts on `art/concepts/plenty_options.png` (source `tools/art/plenty_concepts.py`);
+hooks are proposals for `@fights`, placements for `@world`.
+
+- **The Gorger** (`gorger`, a pack monster, 72x80). A walking stomach on stubby legs: a tiny head in a
+  paper festival crown, cheeks stuffed, a napkin tucked in its collar, a fork and a drumstick, and a
+  second mouth grinning and chewing right across its belly. *Hook - it eats until it can't move:* its
+  telegraph is a feast (it heals), and then it lies bloated and helpless for a round. A telegraph
+  that is an *opening*, not a threat: save Crush for the bloated turn.
+- **The Second Chin** (`second_chin`, 88x118). A pear-shaped alderman in roast-red velvet and a chain
+  of office; his own little face, frightened, under a powdered wig - and under it a double chin grown
+  into a face of its own, beady and sneering, that does the talking now. *Hook - the critic:* it
+  remembers what you did last; do the same thing twice and it yawns ("Predictable.") and punishes it.
+  Teaches **varying your answers**.
+- **The Ever-Sow** (`ever_sow`, boss, 104x96). The holy pig that regrows whatever is carved off:
+  dressed like a shrine - candles and ribbons, a velvet cloth, a gold ring through the snout, a
+  butcher's cleaver left in her back - her flanks carved to raw meat budding back. *Hook - it grows
+  back:* her wounds knit (telegraph), then she regrows. Salt the wound (an item) while it knits and
+  she can't. Teaches **the right item at the right time**.
