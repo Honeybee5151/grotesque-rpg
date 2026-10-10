@@ -75,15 +75,33 @@ scarf streaming into its mouth), `stunned` (choking: knees buckled, both hands a
 water dribbling from its jaw), `hurt` (a flinch). Source: `tools/art/mouther.py`; sheet:
 `art/concepts/mouther_poses.png`.
 
-## Sallow Fen (region 1) - concepts, not final
+## The Brood (`brood`) and spawnlings (`spawnling`) - the Sallow Fen's boss
+
+**Look.** The spawn-mother under Hollowell's well: a bloated dark toad squatting in black water,
+dead milky eyes half-lidded on top of her head, her back a heaped dome of glossy black spawn with
+riders curled in the eggs and jelly hanging off it. Under her chin a pale sac of more; in the seam
+of her mouth a toothed pink sucker. Focal accent: the sac. Her spawnlings are hatched riders, baby
+Sucker Frogs: glossy black tadpole-frogs on budding pale legs, one big embryo eye, a tiny pink sucker.
+
+**Lore.** The black spawn in Odo's bucket was hers, and the Sucker Frog that rode him is one of her
+brood. The flooded caves under the well are her nursery.
+
+**Hook: the hatch.** Her sac swells (telegraph) and next round a spawnling drops into the fight; a
+spawnling still alive a round later climbs onto the hero (Drained) and leaves the formation without
+dying. Kill the spawnling or hit the mother: a clean **priority** call. One spawnling per swell
+(`@fights`).
+
+**Flavour.** Dread.
+
+**Sprites.** `art/monsters/brood/` (104x96): `normal` (squatting, the sac slack), `telegraph` (she
+rears and the sac swells into a stretched pale balloon, eggs showing through), `hurt` (eyes squeezed
+shut, she sinks). `art/monsters/spawnling/` (40x44): `normal` (sitting on its curled tail),
+`telegraph` (coiled to leap, the sucker flared - the climb), `hurt` (squashed flat). A boss and two
+spawnlings fit 320 easily (192px). Source: `tools/art/brood.py`; sheet: `art/concepts/brood_poses.png`.
+
+## Sallow Fen (region 1) - how it was planned
 
 world's region 1: a mouth that **sucks**, dread, night and fog, lantern amber the only warm colour.
-Every fen monster's big move is answered differently: the Host teaches **Guard**. Concepts on
-`art/concepts/fen_options.png` (source `tools/art/fen_concepts.py`); hooks are proposals for
-`@fights`, placements from `@world`. Built so far: Penny Leeches and the Mouther (above).
-
-- **The Brood** (`brood`, region boss, 104x92). The spawn-mother under the well: a bloated dark toad
-  with dead milky eyes, her back a heaped dome of black spawn with riders curled in the eggs, a pale
-  sac of more under her chin. The Sucker Frog is one of hers. *Hook - the hatch:* her sac swells
-  (telegraph), then spawnlings drop into the formation and climb onto the hero if left. Teaches
-  **priority**. Placement: deep in the flooded caves under the well.
+Every fen monster's big move is answered differently: the Host teaches **Guard**, the Mouther
+**Crush**, the Penny Leeches **thinning a pack**, the Brood **priority**. The concept sheet the set
+came from: `art/concepts/fen_options.png` (source `tools/art/fen_concepts.py`). All four are built.
