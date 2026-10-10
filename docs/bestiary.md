@@ -226,3 +226,30 @@ regional idea: whatever ate the Ever-Sow's meat grows back, and **salt** stops i
 teaches a new answer: a telegraph that is an opening (the Gorger), varying your answers (the Second
 Chin), the right item at the right time (the Ever-Sow). The concept sheet the set came from:
 `art/concepts/plenty_options.png` (source `tools/art/plenty_concepts.py`). All three are built.
+
+## The Hush (region 3) - concepts, not final
+
+world's region 3: the mouth **sewn shut**, dread - bone white, ash grey, and one cold blue, which
+is every Hush monster's focal accent (`hush_light`: cold, high, thin). The Examination's third phase
+crosses its wood; the abbey is at its heart and the examiner never speaks. In a game about a mute
+hero, the Hush makes silence the mechanic. Concepts on `art/concepts/hush_options.png` (source
+`tools/art/hush_concepts.py`); hooks are proposals for `@fights`.
+
+- **The Hushed Brothers** (`hushed_brother`, a pack). The abbey's last monks: bone-white habits, mouths
+  sewn shut with black thread, and the habit parted at the belly where a second, upright mouth
+  whispers, cold blue inside. They kneel to the hero as "Brother Hush", a living saint who keeps the
+  Vow - and hunt the talkers, above all Nine, the novice who ran from them; the fight is the Brothers
+  coming for Nine with the hero between (`@world`). *Hook - the hush:* the belly whispers
+  (telegraph), then the hero is Hushed (skills sealed two rounds) - unless the whisperer is struck
+  that round. A plain hit is the answer.
+- **The Ear Tree** (`ear_tree`). A dead bone-white tree crusted with human ears, roots like fingers, a
+  hollow like an ear canal with cold blue deep in it. On the map, a stealth landmark - it hears
+  footsteps, so you cross while the wind moves the leaves; a fight if it hears you (`@world`).
+  *Hook - it hears you:* when its ears turn to you (telegraph), a loud move (a skill) draws its
+  branches; quiet actions are safe. Teaches **restraint**.
+- **The Tacit** (`tacit`, boss; working name "the One Who Waits"). Impossibly tall and thin, bent
+  under the frame, its face a pale oval with one stitched seam; one arm dragging, the other holding
+  out an open palm with cold blue light pooled in it. *Hook - silence is consent:* each round it
+  waits for an answer (telegraph: the question). Unless the hero refuses - world is pitching a
+  Refuse/Shake command - his silence is a yes, and it takes something. The one place his silence
+  works against him.
