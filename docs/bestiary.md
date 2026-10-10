@@ -50,19 +50,38 @@ for all three: the unison is the warning), `hurt` (it contracts into a knot). So
 `tools/art/penny_leech.py`; sheet: `art/concepts/penny_leech_poses.png`. Placement (`@world`): the
 black pool in the well cave or the fen shallows, right after the Host.
 
+## The Mouther (`mouther`) - the drowned boardwalk north of Hollowell
+
+**Look.** A bog body, peat-tanned to leather and pressed crooked by the bog: knock-kneed, one
+shoulder hiked, the skull flattened on one side, in a rotted coat. Its jaw hangs far below where a
+jaw should be and works with no sound. A rotted scarf has slipped down off the mouth it once covered.
+Focal accent: the wet pink inside of that mouth.
+
+**Lore.** Hollowell says the fen keeps what it's owed: it kept this one's voice, and they think it
+kept the hero's. (It didn't - but a drowned man who lost his voice the same way is a hint for later.)
+Moth: "Drowned men don't talk. Everybody knows that."
+
+**Hook: the inhale.** It sucks in a long silent breath (telegraph), and next round drinks the breath
+out of the hero: it takes his MP and heals by that much, or drinks HP when he has none. Guard doesn't
+help - it isn't damage. **Crush it mid-inhale** and it chokes on its own breath: the drink is
+cancelled and it loses the action. Teaches **Crush**, and spending MP before it's taken. Rule:
+`"break": {"by": ["crush"]}` (`@fights`).
+
+**Flavour.** Dread.
+
+**Sprites.** `art/monsters/mouther/`, all 96x118 on one ground line: `normal` (crooked, slack, the
+jaw working), `telegraph` (head tipped back, jaw dropped further, arms spread, the air and its own
+scarf streaming into its mouth), `stunned` (choking: knees buckled, both hands at its throat, fen
+water dribbling from its jaw), `hurt` (a flinch). Source: `tools/art/mouther.py`; sheet:
+`art/concepts/mouther_poses.png`.
+
 ## Sallow Fen (region 1) - concepts, not final
 
 world's region 1: a mouth that **sucks**, dread, night and fog, lantern amber the only warm colour.
 Every fen monster's big move is answered differently: the Host teaches **Guard**. Concepts on
 `art/concepts/fen_options.png` (source `tools/art/fen_concepts.py`); hooks are proposals for
-`@fights`, placements from `@world`. Built so far: Penny Leeches (above).
+`@fights`, placements from `@world`. Built so far: Penny Leeches and the Mouther (above).
 
-- **The Mouther** (`mouther`, solo/pair). A peat-tanned bog body, pressed crooked by the bog, a
-  rotted scarf slipped down off the mouth it once covered; its jaw hangs far too low and works with
-  no sound. Lore: the fen kept its voice - what Hollowell thinks happened to the hero (it didn't).
-  *Hook - the inhale:* it gapes and sucks in a long silent breath (telegraph), then drinks the breath
-  out of the hero (MP). Crush it mid-inhale and it chokes (stun). Teaches **Crush** and spending MP
-  before it's taken. Placement: the drowned boardwalk north of Hollowell ("Drowned men don't talk").
 - **The Brood** (`brood`, region boss, 104x92). The spawn-mother under the well: a bloated dark toad
   with dead milky eyes, her back a heaped dome of black spawn with riders curled in the eggs, a pale
   sac of more under her chin. The Sucker Frog is one of hers. *Hook - the hatch:* her sac swells

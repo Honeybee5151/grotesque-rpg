@@ -4,9 +4,10 @@ A turn-based pixel-art RPG in **Godot 4.4.1** (GDScript). A mute hero who talks 
 world of wonderfully grotesque monsters. **Miles** is the director: big creative calls are his.
 
 ## Layout
-- `boot.tscn` -> `title.tscn` -> `main.tscn` (battle). Entry is `scripts/boot.gd` (mounts update packs).
-- `scripts/` - `battle/` (the battle), `main.gd` (the tutorial fight), `data.gd` hero/items/enemies,
-  `title.gd`, `updater.gd`, `boot.gd`, `sprite_factory.gd` (procedural cave background).
+- `boot.tscn` -> `title.tscn` -> Play -> `scenes/world/world.tscn` (the overworld; battles start from it).
+  Entry is `scripts/boot.gd` (mounts update packs). `main.tscn` is the tutorial fight on its own.
+- `scripts/` - `world/` (overworld, maps), `battle/` (the battle), `main.gd` (the standalone fight),
+  `data.gd` hero/items/enemies, `title.gd`, `updater.gd`, `boot.gd`, `sprite_factory.gd` (cave background).
 - `tools/` - `smoke_test.gd` (headless battle autoplay), `update_test.*` (updater end-to-end),
   `art/` (`sculpt.py` 3D-sculpt -> pixel-art renderer, `host_concepts.py`, `grid.py` coordinate viewer).
 - `art/` - PNG assets (`art/monsters/<id>/`, `art/world/`, `art/concepts/`).
