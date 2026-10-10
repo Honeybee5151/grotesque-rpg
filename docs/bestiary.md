@@ -165,21 +165,54 @@ shovelling, cheeks bulging, the belly-mouth gaping on food), `stunned` (bloated:
 tipped back, legs splayed, eyes rolled, napkin popped, a puff of steam), `hurt`. Source:
 `tools/art/gorger.py`; sheet: `art/concepts/gorger_poses.png`.
 
-## Plenty (region 2) - concepts, not final
+## The Second Chin (`second_chin`) - a Plenty alderman
+
+**Look.** A pear-shaped alderman in roast-red velvet, a gold chain of office and lace at his throat.
+His own little face, frightened, under a powdered wig - and under it a double chin grown into a face
+of its own, beady and sneering, that does the talking now. Focal accent: the chin's mouth.
+
+**Lore.** He ate at the holy pig's table every feast day, and what grew back grew a mind of its own.
+He hasn't finished a sentence in years; it finishes them for him.
+
+**Hook: the critic.** It remembers what the hero did last round, and says so - "It eyes your raised
+arms, bored." (telegraph: the knowing look). If he does the same thing again that round, it says
+"Predictable." and counter-hits; if he changes his answer, it scowls and whiffs. Decided before he
+picks and reading only last round, so it's fair and readable. Teaches **varying your answers**
+(Attack and Crush count as different; `@fights`).
+
+**Flavour.** Carnival.
+
+**Sprites.** `art/monsters/second_chin/`, 88x118: `normal` (stiff, his face afraid, the chin
+sneering), `telegraph` (the knowing look: the chin juts, eyes narrowed to slits, a smug lopsided
+smirk; his little hand flies to his mouth), `hurt` (the chin grimaces, the body jiggles back).
+Source: `tools/art/second_chin.py`; sheet: `art/concepts/second_chin_poses.png`.
+
+## The Ever-Sow (`ever_sow`) - Plenty's holy pig, its boss
+
+**Look.** A vast sow, three-quarter on, dressed like a shrine: candles and ribbons, a velvet cloth, a
+gold ring through her snout, a butcher's cleaver left in her back. Her flanks are carved in clean
+butcher's slabs down to raw meat, budding back. Focal accent: the raw red of the cuts.
+
+**Lore.** Plenty is fed by her: carve what you like, it grows back by morning. Whatever ate of her
+grows back too - which is why salt, and the Salt Guild, matter here.
+
+**Hook: it grows back.** Her wounds knit (telegraph: she arches, snout up, new flesh swelling out of
+the cuts like dough), and next round she regrows a great heal. Throw Salt on her while she knits and
+the wound salts shut: the heal is lost and she's stunned. Salt any other time is a small sting, and
+it's scarce (2-3 a fight, from the Salt Guild). Teaches **the right item at the right time**
+(Salt becomes a thrown item; `"break": {"by": ["salt"]}`, `@fights`).
+
+**Flavour.** Carnival.
+
+**Sprites.** `art/monsters/ever_sow/`, 104x96: `normal` (serene, carved, budding), `telegraph`
+(knitting), `stunned` (salted: the cuts crusted white, slumped onto her belly, eyes squeezed, a candle
+down, salt spilled), `hurt`. Source: `tools/art/ever_sow.py`; sheet: `art/concepts/ever_sow_poses.png`.
+
+## Plenty (region 2) - how it was planned
 
 world's region 2: the mouth that **gorges**, carnival - bodies overflowing, almost funny, saturated
-(roast reds, yolk yellows, pinks), lit warmer and fuller than the fen (`carnival_light`). A regional
-idea: whatever ate the Ever-Sow's meat grows back, and **salt** stops it - the hero is applying to the
-Salt Guild. Concepts on `art/concepts/plenty_options.png` (source `tools/art/plenty_concepts.py`);
-hooks are proposals for `@fights`, placements for `@world`. Built so far: the Gorger (above).
-
-- **The Second Chin** (`second_chin`, 88x118). A pear-shaped alderman in roast-red velvet and a chain
-  of office; his own little face, frightened, under a powdered wig - and under it a double chin grown
-  into a face of its own, beady and sneering, that does the talking now. *Hook - the critic:* it
-  remembers what you did last; do the same thing twice and it yawns ("Predictable.") and punishes it.
-  Teaches **varying your answers**.
-- **The Ever-Sow** (`ever_sow`, boss, 104x96). The holy pig that regrows whatever is carved off:
-  dressed like a shrine - candles and ribbons, a velvet cloth, a gold ring through the snout, a
-  butcher's cleaver left in her back - her flanks carved to raw meat budding back. *Hook - it grows
-  back:* her wounds knit (telegraph), then she regrows. Salt the wound (an item) while it knits and
-  she can't. Teaches **the right item at the right time**.
+(roast reds, yolk yellows, pinks), lit warmer and fuller than the fen (`carnival_light`). The
+regional idea: whatever ate the Ever-Sow's meat grows back, and **salt** stops it. Each monster
+teaches a new answer: a telegraph that is an opening (the Gorger), varying your answers (the Second
+Chin), the right item at the right time (the Ever-Sow). The concept sheet the set came from:
+`art/concepts/plenty_options.png` (source `tools/art/plenty_concepts.py`). All three are built.
