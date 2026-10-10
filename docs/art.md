@@ -27,9 +27,13 @@ Lessons from redrawing the Host. Read before drawing anything.
 - `art/fonts/grotesk.fnt`: the body font. Proportional, 7px caps, 2px descenders, 10px line,
   `info size=10`. `art/fonts/grotesk_digits.fnt`: chunky outlined digits for damage popups
   (0-9 + - ! ? . /); the dark outline is baked in and the white fill takes `font_color`.
+- `art/fonts/grotesk_crit.fnt`: the same digits 2px taller (`info size=12`) for crits and stun hits.
 - Use a font only at its own size, with `scaling_mode=0` in its tracked `.import`: Godot's stock
   import scales bitmap fonts fractionally to any requested `font_size` (the default 16 drew 1.6x).
   Bitmap fonts ignore `outline_size`, so outlines must be drawn into the glyphs.
+- After editing a font's `.import`, delete its `.godot/imported/<name>.fnt-*` and import again:
+  Godot can keep the first import's settings (the crit font stayed scaled until its cache was
+  cleared). Atlases are `importer="skip"` (the font importer reads them itself).
 - `art/ui/logo.png` (96x26): the title logo. The O is the Sucker Frog's eye, the Q's tail is its
   tongue. Sources: `tools/art/font.py` (glyphs as text, `--specimen` to judge them on a battle
   window) and `tools/art/logo.py` (`--preview` on the title scene).
@@ -49,6 +53,11 @@ Lessons from redrawing the Host. Read before drawing anything.
 - Files: `art/monsters/<id>/normal.png` + `telegraph.png` (required), `stunned.png` / `hurt.png`
   (optional). The battle draws them at scale 1 with the bottom-centre at (160, 122); a missing pose
   falls back to `normal`. Every pose uses the same canvas and ground line, so swapping never jumps.
+- **Formations:** the battle stands enemies canvas by canvas, 4px apart, the group centred on x=160,
+  every bottom row on y=122. Canvas widths plus gaps must fit in 320. Budgets: solo up to 104 wide
+  (x 108-212), pairs up to 96 (x 62-258), trios up to 80 (x 36-284); mixed groups are fine (one 104
+  + two 60s). A pack monster is drawn small from the start, not shrunk. Don't draw around the battle
+  windows; the command window over a trio's left member is a battle-UI problem (`@fights`).
 - Each monster gets a `normal` pose and a `telegraph` pose (the warning before its big move), and
   optionally `hurt`. Telegraphs must read in one glance: change the silhouette, not just a colour.
 - Make poses parameters of one sculpt (head/limb frames, a lift, named arm variants), not separate
