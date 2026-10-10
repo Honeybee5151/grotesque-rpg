@@ -12,13 +12,47 @@ Riders - things like the Sucker Frog that climb onto people and wear them - are 
 the water. The hero meets the first one in the prologue. Whether riders and the stolen voice share a
 source is a thread to pull later, not a promise yet.
 
-**Act one: the Examination** (Miles, 2026-10-10). After the prologue the hero finds a **poster**, and
-it sends him on a journey to a great Examination in the spirit of Hunter x Hunter's Hunter Exam: open
-to anyone, dangerous, run in phases by eccentric examiners, crowded with rival applicants. Proposal
-(not decided): the poster is folded in the drowned man's own coat - the only clue to where he was
-going before the fen took his voice - and the Examination's phases are the regions, so the journey
-crosses Plenty, the Hush and Clamour. A mute applicant in a crowd of talkers: examiners and rivals
-read his silence as menace, wisdom or contempt. "Then we go from there."
+## Act one: the Salt Examination
+Miles (2026-10-10): after the prologue a **poster** sends the hero to a hunter exam, as romantic as
+Hunter x Hunter's - a journey just to reach it, with challenges and puzzles on the road; other
+contestants once he's there; trials until he receives his certification.
+
+**The Salt Guild** hunts riders. Where riders crawl up out of the water and wear people, Salt
+Hunters go where nobody else will - drowned roads, sewn-mouthed abbeys, cities of noise - to hunt
+riders, cut the ridden free, find lost things and map what isn't mapped. Children play at it. Their
+licence is **the Salt**: a card of pressed salt-glass that never dissolves and opens every door. The
+Examination is held once a year, never in the same place, and finding it is the first test.
+
+**The poster** is folded in the drowned man's own coat, soaked, the ink run. It is a riddle - *held at
+the end of the spring rains, where the hungry are fed and never full* (Plenty) - and its applicant
+line carries a name the fen has washed away. His? Nobody can say, least of all him.
+
+**The road there** (challenges and puzzles; each a place to meet people and test the gestures):
+- The drowned road north out of Hollowell, through fog: the Mouther, Penny Leeches in the shallows.
+- **The ferrywoman's question**, to cross the black water: an impossible choice ("your mother and
+  your child are drowning..."). Every answer sends you back. The only way across is to say nothing -
+  the mute hero has to *choose* silence, as an answer, from the menu.
+- Plenty's hidden door: the Examination is entered through a butcher's that sells the Ever-Sow's
+  meat. You order "the cut that grows back" - without words.
+
+**The Examination** (hundreds of applicants with numbered salt-tags; he can't give a name, so the
+registrar writes one for him). Contestants, each a different relation to mouths and silence:
+- **Pim**, a kitchen boy from Plenty who talks enough for two and appoints himself the hero's voice
+  (and translates his gestures wrong, cheerfully). The friend.
+- **Nine**, a runaway novice from the Hush under a vow of silence who signs in the abbey's hand-speech -
+  the only one who reads the hero right. Cold, exact, dangerous.
+- **Old Gristle**, a thirty-time applicant whose belly-mouth laughs while his face smiles; he befriends
+  rookies to ruin them.
+- **The Lady and her Rider**, who lets a rider ride her by choice. They take turns speaking. The
+  Examination's terror.
+Phases (a proposal, each its own examiner and test): the Long Swallow (an endless tunnel under Plenty -
+keep up or drop), the Tasting (hunt and cook for a glutton examiner), the Hush crossing (through the
+wood where silence is consent), the Tower of Tongues in Clamour (doors that open to words: make others
+speak for you), the Hunt (take another applicant's tag), and **the Concession**: duels won when your
+opponent *says* "I yield" - which the hero can never say.
+
+**Certification** in Clamour. The Salt is presented by the city's Herald - who speaks with the hero's
+stolen voice. The end of act one, the start of everything else.
 
 ## Prologue: Hollowell (the tutorial) - built
 Goal: teach walking, gestures and the Host's telegraph, and make the Host land by letting the player

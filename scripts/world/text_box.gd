@@ -24,6 +24,7 @@ var _cursor := 0
 var _cancelable := false
 var _state := ""          # "" | "typing" | "wait" | "caption" | "menu"
 var _skip := false
+var _caption_serial := 0
 var _hint: Label
 var _hint_serial := 0
 
@@ -76,14 +77,19 @@ func say(who: String, text: String, pitch := 1.0) -> void:
 	_state = ""
 
 
-## A line that goes on by itself (the hero's gestures, small beats).
+## A line that goes on by itself (the hero's gestures, small beats). It may run alongside other
+## lines (the gesture caption does): when it times out it only lets go of the box if nothing else
+## has taken it over since, or a say() / menu that started meanwhile would stop listening.
 func caption(text: String, sec := 0.7) -> void:
 	_open("")
 	_text.text = text
 	_text.visible_characters = -1
 	_state = "caption"
+	_caption_serial += 1
+	var serial := _caption_serial
 	await get_tree().create_timer(sec).timeout
-	_state = ""
+	if _state == "caption" and serial == _caption_serial:
+		_state = ""
 
 
 ## Pops up a menu above the box. rows: [{label, value, enabled?}]. Returns the picked value, or null
