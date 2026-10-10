@@ -14,7 +14,8 @@ const SLOT_W := 104.0       # one battler canvas wide: enemies stand this far ap
 const BAR_W := 44.0
 const PLAYER_POPUP := Vector2(272, 118)
 const ENEMY_POPUP_Y := 50.0
-# art/monsters/<sprite>/<pose>.png, all on the same canvas. Missing poses fall back to normal.
+# art/monsters/<sprite>/<pose>.png at 1x, all on the same canvas (up to 104x118) and standing on
+# its bottom row. Missing poses fall back to normal.
 const POSES := ["normal", "telegraph", "stunned", "hurt"]
 
 const SHADER := """
@@ -47,7 +48,7 @@ var _menu_rows: Array[Label] = []
 var _on_cursor := Callable()
 var _fx_rng := RandomNumberGenerator.new()  # screen shake etc., kept off the battle's RNG
 var _shader: Shader
-var _foes: Dictionary = {}  # Battler -> {sprite, mat, poses, scale, x, pose}
+var _foes: Dictionary = {}  # Battler -> {sprite, mat, poses, x, pose}
 var _blink: Tween
 
 var log_label: Label
@@ -149,10 +150,11 @@ func _add_enemy(b: Battler, x: float) -> void:
 		var path := "res://art/monsters/%s/%s.png" % [art, pose]
 		if ResourceLoader.exists(path):
 			poses[pose] = load(path)
-	var px := 1
 	if not poses.has("normal"):
-		poses = _interim_poses(art)
-		px = 2
+		push_warning("no art/monsters/%s/normal.png, drawing a placeholder" % art)
+		var img := Image.create_empty(24, 24, false, Image.FORMAT_RGBA8)
+		img.fill(Color("#ff00ff"))
+		poses["normal"] = ImageTexture.create_from_image(img)
 	var mat := ShaderMaterial.new()
 	mat.shader = _shader
 	mat.set_shader_parameter("flash", 0.0)  # set up front: tweens need them to exist
@@ -161,25 +163,10 @@ func _add_enemy(b: Battler, x: float) -> void:
 	s.centered = false
 	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	s.material = mat
-	s.scale = Vector2(px, px)
 	s.position = Vector2(x, GROUND_Y)
 	add_child(s)
 	_foes[b] = {"sprite": s, "mat": mat, "poses": poses, "x": x, "pose": "normal"}
 	set_pose(b, "normal")
-
-
-# Stand-ins drawn in code at half size (shown at 2x) until art/monsters/<sprite>/ has PNGs.
-func _interim_poses(art: String) -> Dictionary:
-	match art:
-		"host":
-			return {
-				"normal": ImageTexture.create_from_image(Sprites.build_host(false)),
-				"telegraph": ImageTexture.create_from_image(Sprites.build_host(true)),
-			}
-	push_warning("no art for enemy sprite '%s'" % art)
-	var img := Image.create_empty(24, 24, false, Image.FORMAT_RGBA8)
-	img.fill(Color("#ff00ff"))
-	return {"normal": ImageTexture.create_from_image(img)}
 
 
 # Bottom-centre anchor: every pose stands on the ground line whatever its canvas.
