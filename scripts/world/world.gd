@@ -73,6 +73,7 @@ func go(map_id: String, spawn: String) -> void:
 	box.close()
 	map = load("res://scripts/world/maps/%s.gd" % map_id).new()
 	map.name = map_id.to_pascal_case()
+	map.id = map_id
 	map.world = self
 	add_child(map)
 	move_child(map, 0)

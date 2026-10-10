@@ -12,12 +12,15 @@ const FEN := {
 	"blocked": "~",
 	"default": ".",
 	"terrain": {
-		"~": {"rows": [0, 1], "edge": "!~|="},
-		".": {"rows": [2, 3, 4], "edge": "~|="},
-		",": {"rows": [5, 6], "edge": "~|="},
+		"~": {"rows": [0, 1], "edge": "!~|=spx"},
+		".": {"rows": [2, 3, 4], "edge": "~|=spx"},
+		",": {"rows": [5, 6], "edge": "~|=spx"},
 		"o": {"rows": [7], "variants": 4},
-		"|": {"rows": [8], "edge": "!~|="},
-		"=": {"rows": [9], "edge": "!~|="},
+		"|": {"rows": [8], "edge": "!~|=spx"},
+		"=": {"rows": [9], "edge": "!~|=spx"},
+		"s": {"rows": [10], "edge": "!~|=spx"},
+		"p": {"rows": [11], "edge": "!px"},
+		"x": {"rows": [12], "edge": "!px"},
 	},
 }
 

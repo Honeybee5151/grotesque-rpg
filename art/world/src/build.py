@@ -11,6 +11,7 @@ import fen  # noqa: E402
 import people  # noqa: E402
 import poster  # noqa: E402
 import props  # noqa: E402
+import road  # noqa: E402
 from pix import sheet  # noqa: E402
 
 OUT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
@@ -41,6 +42,17 @@ if __name__ == "__main__":
     save(props.bubble(), "bubble.png")
     save(props.lantern_icon(), "item_lantern.png")
     save(poster.poster(), "poster.png")
+    save(sheet(road.gristle(), 2), "gristle.png")
+    standing, lying = road.mouther()
+    save(standing, "mouther.png")
+    save(lying, "mouther_lying.png")
+    save(road.salt_circle(), "salt_circle.png")
+    save(road.signpost(), "signpost.png")
+    save(road.milestone(), "milestone.png")
+    for i in range(2):
+        save(road.dead_tree(i), f"dead_tree_{i}.png")
+    save(road.poster_icon(), "item_poster.png")
+    save(road.pennies_icon(), "item_pennies.png")
     save(cave.atlas(), "cave_tiles.png")
     save(cave.rungs(), "rungs.png")
     save(cave.lantern_rock(), "lantern_rock.png")
