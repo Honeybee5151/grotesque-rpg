@@ -22,6 +22,9 @@ var people := {}              # Vector2i -> actor standing on (or stepping into)
 var examine := {}             # Vector2i -> Callable: things the hero can face and press Z on
 var triggers := {}            # Vector2i -> Callable: fires when the hero finishes a step there
 var spawns := {}              # name -> [cell, facing]
+var camera: Camera2D
+var hero_glow := 0.0          # > 0: a faint light around the hero (dark maps)
+var _glow := -1
 
 
 func _ready() -> void:
@@ -115,6 +118,9 @@ func spawn_player(spawn: String) -> void:
 	cam.limit_bottom = size_px().y
 	player.add_child(cam)
 	cam.make_current()
+	camera = cam
+	if hero_glow > 0.0 and light != null:
+		_glow = light.add(player.position, 26.0, hero_glow)
 
 
 # --------------------------------------------------------------------------------------------
@@ -154,6 +160,22 @@ func interact(c: Vector2i) -> void:
 func hero_stepped(c: Vector2i) -> void:
 	if triggers.has(c):
 		world.run(triggers[c])
+
+
+func _physics_process(_delta: float) -> void:
+	if _glow >= 0 and player != null:
+		light.move(_glow, player.position + Vector2(0, -8))
+
+
+## Shakes the view by up to `px` whole pixels for `sec` seconds.
+func shake(px: float, sec: float) -> void:
+	if camera == null:
+		return
+	var tw := create_tween()
+	for i in maxi(1, int(sec / 0.04)):
+		tw.tween_property(camera, "offset", Vector2(randf_range(-px, px), -8.0 + randf_range(-px, px)).round(), 0.04)
+	tw.tween_property(camera, "offset", Vector2(0, -8), 0.04)
+	await tw.finished
 
 
 ## Pixel centre of a cell, for lights.

@@ -26,7 +26,7 @@ var _skip := false
 
 
 func _ready() -> void:
-	layer = 5
+	layer = 30   # above the world's fades, so narration can play over black
 	_panel = _window(BOX_POS, BOX_SIZE)
 	_text = _label(_panel, Vector2(8, 4), Vector2(304, 44))
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

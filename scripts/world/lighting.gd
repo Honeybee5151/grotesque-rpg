@@ -11,9 +11,9 @@ uniform vec2 area = vec2(320.0, 180.0);
 uniform int count = 0;
 uniform vec4 lights[16];
 uniform float ambient = 0.3;
-uniform vec3 band0 : source_color = vec3(0.13, 0.10, 0.24);
-uniform vec3 band1 : source_color = vec3(0.36, 0.30, 0.52);
-uniform vec3 band2 : source_color = vec3(0.68, 0.62, 0.80);
+uniform vec3 band0 : source_color = vec3(0.15, 0.12, 0.27);
+uniform vec3 band1 : source_color = vec3(0.45, 0.39, 0.62);
+uniform vec3 band2 : source_color = vec3(0.74, 0.68, 0.86);
 uniform vec3 band3 : source_color = vec3(1.0, 0.93, 0.80);
 
 const float BAYER[16] = float[](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0,

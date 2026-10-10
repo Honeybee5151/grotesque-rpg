@@ -29,7 +29,7 @@ func setup(tex: Texture2D, columns: int, frame_size := Vector2i(16, 24)) -> void
 	sprite = Sprite2D.new()
 	sprite.texture = tex
 	sprite.hframes = columns
-	sprite.vframes = 4
+	sprite.vframes = maxi(1, tex.get_height() / frame_size.y)
 	sprite.centered = false
 	sprite.offset = Vector2(-frame_size.x / 2, -frame_size.y + 1)
 	add_child(sprite)
@@ -131,4 +131,5 @@ func _refresh() -> void:
 	var col := pose
 	if moving and _left > TILE / 2:
 		col = Pose.WALK_A if _foot else Pose.WALK_B
-	sprite.frame = ROW[facing] * _cols + mini(col, _cols - 1)
+	var row: int = ROW[facing] if sprite.vframes > 1 else 0
+	sprite.frame = row * _cols + mini(col, _cols - 1)

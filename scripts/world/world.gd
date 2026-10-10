@@ -147,8 +147,27 @@ func act(answer: Dictionary, what := "") -> void:
 		cap = cap % what
 	sfx.play("gesture")
 	box.caption(cap, 0.8)
+	var icon: Sprite2D = null
+	if answer["g"] == "show":
+		icon = _float(map.player, "res://art/world/item_%s.png" % answer["item"])
+	elif answer["g"] == "silent":
+		icon = _float(map.player, "res://art/world/bubble.png")
 	await map.player.gesture(answer["g"])
+	if icon != null:
+		icon.queue_free()
 	await get_tree().create_timer(0.15).timeout
+
+
+## A small picture over someone's head (a held-up item, a speech bubble), above the darkness.
+func _float(who: Node2D, path: String) -> Sprite2D:
+	var s := Sprite2D.new()
+	s.texture = load(path)
+	s.centered = false
+	s.offset = Vector2(-s.texture.get_width() / 2, -s.texture.get_height())
+	s.position = Vector2(0, -25)
+	s.z_index = 101
+	who.add_child(s)
+	return s
 
 
 # --------------------------------------------------------------------------------------------
@@ -183,6 +202,7 @@ func battle(enemy_ids: Array, context := {}) -> Dictionary:
 	hero_state = result.get("hero", hero_state)
 	map.process_mode = Node.PROCESS_MODE_INHERIT
 	map.show()
+	await reveal(0.5)
 	busy -= 1
 	return result
 
