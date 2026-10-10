@@ -21,7 +21,7 @@ func _initialize() -> void:
 
 func _process(_delta: float) -> bool:
 	if _out == "":
-		return true
+		return false    # usage error: already quitting with 1
 	_frames -= 1
 	if _frames > 0:
 		return false
@@ -29,6 +29,9 @@ func _process(_delta: float) -> bool:
 	var err := img.save_png(_out)
 	if err == OK:
 		print("captured %dx%d -> %s" % [img.get_width(), img.get_height(), _out])
+		quit(0)
 	else:
 		printerr("could not save %s (error %d)" % [_out, err])
-	return true
+		quit(1)
+	_out = ""
+	return false

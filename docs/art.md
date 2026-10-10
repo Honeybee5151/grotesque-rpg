@@ -20,6 +20,19 @@ Lessons from redrawing the Host. Read before drawing anything.
   (an eye glint, a tooth), with coordinates read from `tools/art/grid.py`.
 - **Two flavours of grotesque** - pick one per monster/region and say which:
   carnival (bodies overflowing, almost funny, saturated) or dread (alien, still, restrained palette).
+- **Text is pixel art too.** All text sits on the 320x180 grid in our own pixel fonts, at their own size,
+  never smooth, never scaled (decided 2026-10-10; Miles left the call to monster).
+
+## Text and logo
+- `art/fonts/grotesk.fnt`: the body font. Proportional, 7px caps, 2px descenders, 10px line,
+  `info size=10`. `art/fonts/grotesk_digits.fnt`: chunky outlined digits for damage popups
+  (0-9 + - ! ? . /); the dark outline is baked in and the white fill takes `font_color`.
+- Use a font only at its own size, with `scaling_mode=0` in its tracked `.import`: Godot's stock
+  import scales bitmap fonts fractionally to any requested `font_size` (the default 16 drew 1.6x).
+  Bitmap fonts ignore `outline_size`, so outlines must be drawn into the glyphs.
+- `art/ui/logo.png` (96x26): the title logo. The O is the Sucker Frog's eye, the Q's tail is its
+  tongue. Sources: `tools/art/font.py` (glyphs as text, `--specimen` to judge them on a battle
+  window) and `tools/art/logo.py` (`--preview` on the title scene).
 
 ## Pipeline (`tools/art/sculpt.py`)
 1. Sculpt the form in 3D from spheres, ellipsoids, tapered cones and tori that blend like clay; carve

@@ -2,6 +2,7 @@
 build/
 export_credentials.cfg
 *.import
+!art/fonts/*.import
 __pycache__/
 *.pyc
 .claude/settings.local.json

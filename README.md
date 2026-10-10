@@ -1,13 +1,14 @@
 # Grotesque RPG
 
 Godot 4.4.1 (scripts are exported compiled, so keep the engine version pinned — see *Updates*).
-Open the folder in Godot and press F5: boot → title screen (**Play** / Quit) → the Sucker Frog tutorial battle.
+Open the folder in Godot and press F5: boot → title screen (**Play** / Quit) → the tutorial battle against the Host.
 
 **Controls:** Arrows / W,S move · Z / Enter / Space / click confirm · X / Esc / right-click back · M mute
 
-**The fight:** the Sucker Frog cycles Lash → Coil → Latch. Guard on the turn *after* it coils and the
-Latch slips off and stuns it. Miss it and you get Drained (stacking HP/MP drain, weaker attacks) —
-cure it with a Salve. The hero can't die in the tutorial (`MERCY` in `scripts/data.gd`).
+**The fight:** the Host (a man ridden by the Sucker Frog) cycles Lash → Coil → Latch. Guard on the turn
+*after* it coils and the Latch slips off and stuns it, and stunned enemies take double damage. Miss it
+and you get Drained (stacking HP/MP drain, weaker attacks) — cure it with a Salve. The hero can't die
+in the tutorial (`"mercy": true` on the Host in `scripts/data.gd`). The rules: `docs/combat.md`.
 
 ## Putting it on GitHub (once)
 1. On github.com create a **public** repo (e.g. `grotesque-rpg`), empty — no README/licence. It has to be
@@ -51,9 +52,13 @@ The launcher updates itself from GitHub before it starts.
 
 ## Where things live
 - `scripts/data.gd` — hero, items, enemies (add monsters here)
-- `scripts/main.gd` — battle flow, menus, effects, synthesized sound
+- `scripts/battle/` — the battle: rules and flow (`battle.gd`), what it shows and plays (`battle_view.gd`),
+  combatants, enemy behaviours, synthesized sound; `scripts/main.gd` runs the tutorial fight
 - `scripts/title.gd`, `scripts/boot.gd`, `scripts/updater.gd` — title screen, update mounting, update download
-- `scripts/sprite_factory.gd` — all pixel art is drawn in code; swap for PNGs any time
+- `scripts/sprite_factory.gd` — the procedural cave background
+- `art/` — monster sprites (`art/monsters/<id>/`), pixel fonts, the logo; `theme.tres` makes the Grotesk
+  pixel font the default
+- `docs/` — design bibles: `art.md`, `bestiary.md`, `combat.md`
 - `release.cfg` — version + repo, stamped by CI (don't hand-edit for releases; tag instead)
-- `tools/` — `check.ps1` (every check in one go), `smoke_test.gd` (headless autoplay of the fight),
-  updater tests
+- `tools/` — `check.ps1` (every check in one go), `smoke_test.gd` (headless battle autoplays),
+  updater tests, `art/` (the art tools)

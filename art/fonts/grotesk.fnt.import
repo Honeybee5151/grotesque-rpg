@@ -1,0 +1,17 @@
+[remap]
+
+importer="font_data_bmfont"
+type="FontFile"
+uid="uid://d2l5it0hakp5p"
+path="res://.godot/imported/grotesk.fnt-fa52856193626e93b7d623ddc95ed574.fontdata"
+
+[deps]
+
+source_file="res://art/fonts/grotesk.fnt"
+dest_files=["res://.godot/imported/grotesk.fnt-fa52856193626e93b7d623ddc95ed574.fontdata"]
+
+[params]
+
+fallbacks=[]
+compress=true
+scaling_mode=0
