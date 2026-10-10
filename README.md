@@ -42,7 +42,9 @@ Players download the zip once; after that the game updates itself.
   input actions in `project.godot` won't exist in updated installs either: give them a code fallback.
 - Inside the editor the updater is off. `tools/update_test.sh` tests the whole pipeline against a fake
   local release (`GODOT=/path/to/godot tools/update_test.sh`; on Windows `tools\check.ps1 -Updater`
-  runs it through Git Bash).
+  runs it through Git Bash), and with `--real` downloads, verifies and mounts the live latest release.
+  It runs in a copy named "Grotesque RPG (update test)", so it never touches an installed game's
+  user folder (same project name = same folder, including its staged update).
 
 ## The agent team (Windows)
 Four Claude Code sessions (Opus 5.5, max effort) build the game in parallel, one PowerShell window

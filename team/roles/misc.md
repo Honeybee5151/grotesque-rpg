@@ -19,8 +19,9 @@ Never merge something that breaks the checks. Never touch `VERSION` as part of a
 ## Releases (only when Miles says so)
 Bump `VERSION` (e.g. `0.1.0` -> `0.2.0`), commit "Release vX.Y.Z", push `main`. The Release workflow
 builds Windows/Linux/macOS and `game.pck` and publishes the GitHub release; installed games update
-themselves. Check the Actions run finished green and the release has `game.pck`. Pushing a `VERSION`
-change is the one action that reaches players - confirm with Miles first, every time.
+themselves. Check the Actions run finished green and the release has `game.pck`, then run
+`bash tools/update_test.sh --real` (downloads, verifies and mounts the live release in a test copy).
+Pushing a `VERSION` change is the one action that reaches players - confirm with Miles first, every time.
 
 ## Also yours
 - Windows friendliness: the team runs on Miles's Windows PC. Make tools and tests work there
