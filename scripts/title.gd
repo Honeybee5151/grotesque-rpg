@@ -4,6 +4,7 @@ extends Node2D
 
 const Sprites := preload("res://scripts/sprite_factory.gd")
 const Updater := preload("res://scripts/updater.gd")
+const HOST := preload("res://art/monsters/host/normal.png")
 
 var items: Array = []        # {label, id}
 var cursor := 0
@@ -38,12 +39,11 @@ func _build_scene() -> void:
 	bg.centered = false
 	add_child(bg)
 
-	var frog := Sprite2D.new()
-	frog.texture = ImageTexture.create_from_image(Sprites.build_host(false))
-	frog.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	frog.scale = Vector2(2, 2)
-	frog.position = Vector2(160, 63)
-	add_child(frog)
+	var host := Sprite2D.new()
+	host.texture = HOST
+	host.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	host.position = Vector2(160, 63)  # 1x, same spot as in battle (bottom-centre at 160, 122)
+	add_child(host)
 
 	var title := _label(Vector2(8, 6), Vector2(100, 40), 14, Color("#e8d55a"))
 	title.text = "GROTESQUE\nRPG"
