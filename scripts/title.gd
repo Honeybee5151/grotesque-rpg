@@ -144,7 +144,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _activate() -> void:
 	match str(items[cursor]["id"]):
 		"play":
-			get_tree().change_scene_to_file("res://main.tscn")
+			get_tree().change_scene_to_file("res://scenes/world/world.tscn")
 		"restart":
 			updater.restart_game()
 		"quit":

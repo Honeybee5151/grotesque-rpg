@@ -1,9 +1,10 @@
 # Grotesque RPG
 
 Godot 4.4.1 (scripts are exported compiled, so keep the engine version pinned — see *Updates*).
-Open the folder in Godot and press F5: boot → title screen (**Play** / Quit) → the tutorial battle against the Host.
+Open the folder in Godot and press F5: boot → title screen (**Play** / Quit) → the Hollowell prologue in the
+overworld; the Host fight is part of it, and the prologue returns to the title at its end.
 
-**Controls:** Arrows / W,S move · Z / Enter / Space / click confirm · X / Esc / right-click back · M mute
+**Controls:** Arrows walk and move menus · Z / Enter / Space / click confirm, talk, look · X / Esc / right-click back · M mute
 
 **The fight:** the Host (a man ridden by the Sucker Frog) cycles Lash → Coil → Latch. Guard on the turn
 *after* it coils and the Latch slips off and stuns it, and stunned enemies take double damage. Miss it
@@ -52,13 +53,15 @@ The launcher updates itself from GitHub before it starts.
 
 ## Where things live
 - `scripts/data.gd` — hero, items, enemies (add monsters here)
+- `scenes/world/world.tscn`, `scripts/world/` — the overworld: `world.gd` (story flags, text box, battles),
+  maps in `scripts/world/maps/`, dev tools in `scripts/world/dev/` (`drive.gd`, `world_test.gd`)
 - `scripts/battle/` — the battle: rules and flow (`battle.gd`), what it shows and plays (`battle_view.gd`),
   combatants, enemy behaviours, synthesized sound; `scripts/main.gd` runs the tutorial fight
 - `scripts/title.gd`, `scripts/boot.gd`, `scripts/updater.gd` — title screen, update mounting, update download
 - `scripts/sprite_factory.gd` — the procedural cave background
 - `art/` — monster sprites (`art/monsters/<id>/`), pixel fonts, the logo; `theme.tres` makes the Grotesk
   pixel font the default
-- `docs/` — design bibles: `art.md`, `bestiary.md`, `combat.md`
+- `docs/` — design bibles: `art.md`, `bestiary.md`, `combat.md`, `world.md`, `story.md`
 - `release.cfg` — version + repo, stamped by CI (don't hand-edit for releases; tag instead)
 - `tools/` — `check.ps1` (every check in one go), `smoke_test.gd` (headless battle autoplays),
   updater tests, `art/` (the art tools)
