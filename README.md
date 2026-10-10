@@ -43,7 +43,10 @@ story), **fights** (combat), **misc** (merges, tooling, releases, everything els
 rules are in `CLAUDE.md`, their briefs in `team/roles/`. They message each other by name.
 
 Start them with `team\Start-Team.cmd` (first run installs/sets up what's missing), or from PowerShell:
-`team\Start-Team.ps1 [-Continue] [-Layout Windows|Grid|Tabs] [-Only monster,fights]`.
+`team\Start-Team.ps1 [-Continue] [-Layout Windows|Grid|Tabs] [-Only monster,fights] [-Bypass]`.
+Sessions run in auto mode: no permission prompts, with Claude Code's safety classifier blocking risky
+actions; only `misc` can push `main` or touch `VERSION`/CI. `-Bypass` switches every check off.
+The launcher updates itself from GitHub before it starts.
 
 ## Where things live
 - `scripts/data.gd` — hero, items, enemies (add monsters here)
