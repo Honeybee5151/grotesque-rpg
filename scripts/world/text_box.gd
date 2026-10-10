@@ -25,12 +25,24 @@ var _cancelable := false
 var _state := ""          # "" | "typing" | "wait" | "caption" | "menu"
 var _skip := false
 var _caption_serial := 0
+var _picture: TextureRect
+var _picture_more: Polygon2D
 var _hint: Label
 var _hint_serial := 0
 
 
 func _ready() -> void:
 	layer = 30   # above the world's fades, so narration can play over black
+	_picture = TextureRect.new()
+	_picture.size = Vector2(320, 180)
+	_picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_picture.hide()
+	add_child(_picture)
+	_picture_more = Polygon2D.new()
+	_picture_more.polygon = PackedVector2Array([Vector2(0, 0), Vector2(6, 0), Vector2(3, 3)])
+	_picture_more.position = Vector2(307, 170)
+	_picture_more.color = Color("#d6d0ff")
+	_picture.add_child(_picture_more)
 	_panel = _window(BOX_POS, BOX_SIZE)
 	_text = _label(_panel, Vector2(8, 4), Vector2(304, 44))
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -125,6 +137,27 @@ func choose(rows: Array, cancelable := false) -> Variant:
 	return v
 
 
+## A full-screen picture (the poster), faded in and out in hard steps; waits for the player to go on.
+func picture(tex: Texture2D) -> void:
+	close()
+	_picture.texture = tex
+	_picture.modulate.a = 0.0
+	_picture.show()
+	_picture_more.hide()
+	for a in [0.25, 0.5, 0.75, 1.0]:
+		_picture.modulate.a = a
+		await get_tree().create_timer(0.07).timeout
+	_picture_more.show()
+	_state = "picture"
+	await _done
+	_state = ""
+	_picture_more.hide()
+	for a in [0.75, 0.5, 0.25, 0.0]:
+		_picture.modulate.a = a
+		await get_tree().create_timer(0.07).timeout
+	_picture.hide()
+
+
 ## A line at the top of the screen that doesn't stop anything (controls, small nudges).
 func hint(text: String, sec := 4.0) -> void:
 	_hint_serial += 1
@@ -184,7 +217,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		"typing":
 			if a in ["ok", "cancel"]:
 				_skip = true
-		"wait":
+		"wait", "picture":
 			if a in ["ok", "cancel"]:
 				sfx.play("ok")
 				_done.emit(null)

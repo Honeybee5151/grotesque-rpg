@@ -27,6 +27,7 @@ const GESTURES := [
 var flags := {}         # story flags
 var items := {}         # key items the hero carries: id -> name ("Odo's lantern"). Show offers them.
 var hero_state := {}    # the hero between battles, in the battle's hero shape; empty = fresh
+var skills: Array = ["crush"]   # what he can do in a fight; people teach him more (Mend at dawn)
 var map: Node2D
 var box: TextBox
 var sfx: Sfx
@@ -99,6 +100,19 @@ func narrate(text: String) -> void:
 
 func caption(text: String, sec := 0.7) -> void:
 	await box.caption(text, sec)
+
+
+## A full-screen picture (art/world/...), until the player goes on.
+func picture(path: String) -> void:
+	await box.picture(load(path))
+
+
+## Someone teaches him a skill for fights.
+func learn(skill: String, caption_text: String) -> void:
+	if not skills.has(skill):
+		skills.append(skill)
+	sfx.play("ok")
+	await box.caption(caption_text, 2.2)
 
 
 ## A hint at the top of the screen that doesn't hold anything up.
@@ -192,6 +206,7 @@ func _float(who: Node2D, path: String) -> Sprite2D:
 func battle(enemy_ids: Array, context := {}) -> Dictionary:
 	busy += 1
 	var carry: Dictionary = hero_state.duplicate()
+	carry["skills"] = skills.duplicate()
 	carry.merge(context.get("hero", {}), true)    # the scene's own asks (skills) win
 	if not carry.is_empty():
 		context["hero"] = carry

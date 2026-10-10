@@ -28,12 +28,21 @@ the end of the spring rains, where the hungry are fed and never full* (Plenty) -
 line carries a name the fen has washed away. His? Nobody can say, least of all him.
 
 **The road there** (challenges and puzzles; each a place to meet people and test the gestures):
-- The drowned road north out of Hollowell, through fog: the Mouther, Penny Leeches in the shallows.
-- **The ferrywoman's question**, to cross the black water: an impossible choice ("your mother and
+- The drowned road north out of Hollowell, through fog: **the Mouther** (a bog body that lost its voice
+  too), **Penny Leeches** in the shallows (they swallowed Hollowell's wishing pennies).
+- **Tallowmouth**, a dying whaling hamlet on the shore of **the Black Mere**: rendering vats, harpoons
+  on every wall, whalers' widows. Hollowell's lamps burn the whale oil it renders - the fen's one warm
+  colour is bought with blood. A rest here (tea, a blanket) before the crossing.
+- **The ferrywoman's question**, to cross the Mere by night: an impossible choice ("your mother and
   your child are drowning..."). Every answer sends you back. The only way across is to say nothing -
   the mute hero has to *choose* silence, as an answer, from the menu.
+- **Old Iron** (monster's whale): a sperm whale bristling with the harpoons of every whaler who struck
+  it, that never died and now gives them back. It hunts whoever carries a lamp - and he carries Odo's.
+  The ferrywoman tells him to put it out: douse it and cross blind (it circles first), or keep it lit
+  (it finds him at once). The fight is on the barge's deck (battle bg "mere", flag `lamp_lit`).
 - Plenty's hidden door: the Examination is entered through a butcher's that sells the Ever-Sow's
   meat. You order "the cut that grows back" - without words.
+- The Brood (the fen's spawn-mother under the well) waits for later: an optional descent, or a return.
 
 **The Examination** (hundreds of applicants with numbered salt-tags; he can't give a name, so the
 registrar writes one for him). Contestants, each a different relation to mouths and silence:
@@ -91,7 +100,14 @@ know the man first. Code: `scripts/world/maps/hollowell.gd`, `well_cave.gd`.
    hears a confession - and Odo catches her arm and shakes his head, his first gesture (**truth**);
    a shrug (**cold**); saying nothing - "Now there's two of you." (**two**). Odo nods to the hero, once.
    *Odo never says another word. He doesn't need to.* Flag `odo_freed`: he can come back later.
-9. End card, then the title screen. Next: the poster.
+9. **The night, then dawn - built.** He sleeps (by the well, or in the corner by Odo's fire; nobody
+   will have him if Moth blamed him) and wakes whole. A grey morning; the well boarded over. His coat
+   dried on Odo's line, and in the pocket, folded small, **the Salt Guild's poster** (full screen,
+   `art/world/poster.png`, drawn by `art/world/src/poster.py`). Moth reads it out: the hunters "go
+   where nobody goes". There was a name on it; the fen ate it. "Was it yours?" (`poster_name`). She
+   binds his hands the fen way - **he learns Mend** (if she blamed him, a voice from a shuttered window
+   throws him his coat and shows him instead) - and gives him back Odo's lamp. The north road is open.
+10. He leaves by the north road ("DROWNED MAN! COME BACK A HUNTER!"). End card, then the title.
 
 ## Open threads
 - The poster and the Examination: who runs it, what passing grants, where it's held.
