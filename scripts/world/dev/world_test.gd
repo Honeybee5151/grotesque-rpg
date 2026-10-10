@@ -11,24 +11,35 @@ const HOLLOWELL_TO_CAVE := "until:They_pulled Z until:coughed Z wait:1.4 R*4 U*5
 
 const CAVE_TO_MOTH := "D*1 R*1 D*1 R*3 D*3 R*3 D*2 R*1 until:Still_lit Z fight until:takes expect:host_done=true expect:odo_freed=false Z wait:0.3 L*1 U*2 L*3 U*3 L*3 U*1 L*1 U*1 U*1 Z until:Climb_up Z pick:0 until:Where's_my_da"
 
-# From the dawn spawn up the north road, out of Hollowell, to the title.
-const DAWN_TO_TITLE := "expect:dawn=true U*9 L*1 U*1 to:end_of_the_beginning settle expect:scene=title"
+# From the dawn spawn up the north road, out of Hollowell, onto the drowned road.
+const DAWN_TO_ROAD := "expect:dawn=true U*9 L*1 U*1 to:north_road settle expect:map=drowned_road"
+const ROAD_FLAGS := "met_odo,odo_down,rope_cut,host_done,opened,dawn,moth_read=grief,+lantern,+poster"
 
 const STORY := [
 	{
 		"name": "prologue, Odo dies, Moth is shown the lantern, the poster, the road north",
 		"start": "",
-		"script": HOLLOWELL_TO_CAVE + " " + CAVE_TO_MOTH + " answer:show:lantern to:his_lamp to:Was_it_yours expect:moth_read=grief answer:point:self to:I_knew_it settle " + DAWN_TO_TITLE,
+		"script": HOLLOWELL_TO_CAVE + " " + CAVE_TO_MOTH + " answer:show:lantern to:his_lamp to:Was_it_yours expect:moth_read=grief answer:point:self to:I_knew_it settle " + DAWN_TO_ROAD,
 	},
 	{
 		"name": "Odo freed: Moth's reunion, the hero points at himself, the poster, the road north",
 		"start": "hollowell:well:met_odo,odo_down,rope_cut,host_done,odo_freed,odo_carried,opened",
-		"script": "to:What_did_it_DO answer:point:self to:Da_says_no to:Was_it_yours expect:moth_read=truth answer:nod settle " + DAWN_TO_TITLE,
+		"script": "to:What_did_it_DO answer:point:self to:Da_says_no to:Was_it_yours expect:moth_read=truth answer:nod settle " + DAWN_TO_ROAD,
+	},
+	{
+		"name": "drowned road: Gristle, a rotten plank, the sound boards, the Mouther, on north",
+		"start": "drowned_road:south:" + ROAD_FLAGS,
+		"script": "to:planks settle U*5 to:Another_one settle call:talk_gristle to:Am_I_wrong answer:shake to:eel-wine answer:shake to:left_fork answer:shake settle expect:met_gristle=true R*5 U*1 R*1 U*4 U*3 U*1 U*1 R*1 to:gives_way settle U*2 R*1 U*2 L*2 U*2 R*1 U*6 L*6 U*2 to:face_to_the_sky Z fight to:closes_over settle expect:mouther_done=true U*9 to:Tallowmouth settle expect:scene=title",
+	},
+	{
+		"name": "drowned road: Gristle's shortcut through the leech shallows",
+		"start": "drowned_road:circle:" + ROAD_FLAGS,
+		"script": "wait:1 L*2 U*2 L*5 U*4 L*1 U*1 L*1 U*2 to:brushes_his_legs Z fight to:Hollowell's_wishes settle expect:leeches_done=true expect:item=pennies",
 	},
 	{
 		"name": "blamed: the coat from a shuttered window, the road north",
 		"start": "hollowell:dawn:met_odo,odo_down,rope_cut,host_done,opened,moth_read=blame,dawn",
-		"script": "to:Take_it_and_go settle " + DAWN_TO_TITLE,
+		"script": "to:Take_it_and_go settle " + DAWN_TO_ROAD,
 	},
 ]
 
@@ -60,6 +71,14 @@ const PROMPTS := [
 	 "reach": "to:What_did_it_DO", "point": ["well", "odo", "self", "moth"], "show": ["lantern"]},
 	{"name": "dawn: was it yours?", "start": "hollowell:dawn:" + DEAD + ",moth_read=grief,dawn",
 	 "reach": "to:Was_it_yours", "point": ["self", "moth"], "show": ["lantern"]},
+	{"name": "Gristle: am I wrong?", "start": "drowned_road:circle:" + ROAD_FLAGS,
+	 "reach": "call:talk_gristle to:Am_I_wrong", "point": ["self", "gristle"], "show": ["lantern", "poster"]},
+	{"name": "Gristle: eel-wine?", "start": "drowned_road:circle:" + ROAD_FLAGS,
+	 "reach": "call:talk_gristle to:Am_I_wrong answer:nod to:eel-wine", "point": ["self", "gristle"], "show": ["lantern"]},
+	{"name": "Gristle: the left fork?", "start": "drowned_road:circle:" + ROAD_FLAGS,
+	 "reach": "call:talk_gristle to:Am_I_wrong answer:nod to:eel-wine answer:shake to:left_fork", "point": ["self", "gristle"]},
+	{"name": "salt circle: rest?", "start": "drowned_road:circle:" + ROAD_FLAGS,
+	 "reach": "call:rest to:Rest_inside", "point": [], "show": ["poster"]},
 	{"name": "dawn, Odo freed: was it yours?", "start": "hollowell:dawn:" + FREED + ",odo_carried,moth_read=truth,dawn",
 	 "reach": "to:Was_it_yours", "point": ["self", "moth", "odo"], "show": ["lantern"]},
 ]

@@ -249,6 +249,10 @@ func _expect(spec: String) -> void:
 	var got := ""
 	if kv[0] == "scene":
 		got = current_scene.scene_file_path.get_file().get_basename() if current_scene else "-"
+	elif kv[0] == "map":
+		got = world.map.id if is_instance_valid(world) and world.map else "-"
+	elif kv[0] == "item":
+		got = kv[1] if is_instance_valid(world) and world.items.has(kv[1]) else "-"
 	elif is_instance_valid(world):
 		got = str(world.flags.get(kv[0], "-"))
 	if got != kv[1]:

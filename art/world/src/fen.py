@@ -9,6 +9,9 @@ is the other kind: land for water tiles, water for land tiles).
     row  7    o  cobbles, 4 variants (columns 0-3)
     row  8    |  boardwalk running up/down, masked
     row  9    =  boardwalk running left/right, masked
+    row 10    s  shallows you can wade, masked (bit = land beside)
+    row 11    p  plank platform, masked (bit = no platform beside)
+    row 12    x  rotten planks: a broken board, black water through it, moss - they give way
 """
 import numpy as np
 
@@ -22,7 +25,7 @@ WATER = ["#06050b", "#0c0b17", "#141428", "#1f2240", "#323a5c"]
 WOOD = ["#140c0f", "#23171b", "#35252a", "#4a3437", "#644a49"]
 STONE = ["#141219", "#221e29", "#332e3b", "#48424f", "#655e69"]
 
-ROWS = 10
+ROWS = 13
 
 
 def _rng(*key):
@@ -228,6 +231,93 @@ def walk_h(t):
 
 
 # --------------------------------------------------------------------------------------------
+# the drowned road: shallows and plank platforms
+# --------------------------------------------------------------------------------------------
+
+def shallows(seed):
+    r = _seeded(11000 + seed)
+    t = Canvas(16, 16)
+    t.rect(0, 0, 16, 16, WATER[2])
+    for _ in range(6):                          # mud showing through
+        x, y = int(r.integers(0, 14)), int(r.integers(0, 16))
+        t.hline(x, x + int(r.integers(1, 3)), y, PEAT[1])
+    for _ in range(3):                          # ripples
+        x, y, n = int(r.integers(0, 12)), int(r.integers(1, 15)), int(r.integers(2, 5))
+        t.hline(x, x + n - 1, y, WATER[3])
+    for _ in range(2):                          # drowned reed stubs
+        x, y = int(r.integers(2, 14)), int(r.integers(4, 14))
+        t.vline(x, y - 2, y, GRASS[1])
+        t.px(x, y - 2, GRASS[2])
+        t.px(x, y + 1, WATER[1])
+    return t
+
+
+def shallow_edges(t, mask, seed):
+    r = _seeded(11500 + seed * 16 + mask)
+    if mask & 8:
+        t.vline(0, 0, 15, PEAT[1])
+    if mask & 2:
+        t.vline(15, 0, 15, PEAT[1])
+    if mask & 4:                                # the shore below: wet mud
+        t.hline(0, 15, 15, PEAT[2])
+        for x in range(16):
+            if r.random() < 0.5:
+                t.px(x, 14, PEAT[1])
+    if mask & 1:                                # the shore above: a low bank, not a cliff
+        t.hline(0, 15, 0, PEAT[2])
+        t.hline(0, 15, 1, PEAT[1])
+        for x in range(16):
+            if r.random() < 0.4:
+                t.px(x, 2, WATER[1])
+
+
+def platform(seed, rotten=False):
+    """Boards laid across the road. Rotten ones: a broken board with black water through it,
+    darker wood, moss - the tell is on the tile, so the puzzle is honest."""
+    r = _seeded(12000 + seed + (50 if rotten else 0))
+    t = water(seed + 4)
+    for y in range(0, 16, 4):
+        t.rect(0, y, 16, 3, WOOD[2])
+        t.hline(0, 15, y, WOOD[3])
+        t.hline(0, 15, y + 3, WOOD[0])
+        sx = (y * 5 + seed * 3) % 16             # staggered seams between boards
+        t.vline(sx, y, y + 2, WOOD[0])
+        t.px((sx + 7) % 16, y + 1, WOOD[1])      # a nail
+    if rotten:
+        for y in range(0, 16, 4):                # the wood gone dark and soft
+            for x in range(16):
+                if r.random() < 0.45 and t.get(x, y + 1)[:3] != (0, 0, 0):
+                    t.px(x, y + 1, WOOD[1])
+        by = 4 * int(r.integers(1, 3))           # one board broken right through
+        x0 = int(r.integers(3, 7))
+        t.rect(x0, by, 7, 3, WATER[0])
+        t.hline(x0, x0 + 6, by + 2, WATER[1])
+        t.pxs([(x0, by), (x0 + 6, by + 2), (x0 + 3, by)], WOOD[1])   # splintered ends
+        t.px(x0 + 2, by + 1, WATER[2])
+        for _ in range(7):                       # moss
+            x, y = int(r.integers(0, 15)), int(r.integers(0, 15))
+            if not (x0 <= x <= x0 + 6 and by <= y <= by + 2):
+                t.px(x, y, GRASS[2])
+                t.px(x + 1, y, GRASS[1])
+    return t
+
+
+def platform_edges(t, mask):
+    if mask & 1:                                 # open water above: a gap
+        t.hline(0, 15, 0, WATER[0])
+    if mask & 8:
+        t.vline(0, 0, 15, WOOD[0])
+    if mask & 2:
+        t.vline(15, 0, 15, WOOD[0])
+    if mask & 4:                                 # open water below: the boards' edge, posts
+        t.hline(0, 15, 13, WOOD[1])
+        t.hline(0, 15, 14, WOOD[0])
+        t.hline(0, 15, 15, WATER[0])
+        for px_ in (2, 12):
+            t.rect(px_, 14, 2, 2, WOOD[1])
+
+
+# --------------------------------------------------------------------------------------------
 # atlas
 # --------------------------------------------------------------------------------------------
 
@@ -263,4 +353,13 @@ def atlas():
         water_edges(t, m, 10)
         walk_h(t)
         put(t, m, 9)
+        t = shallows(m % 3)
+        shallow_edges(t, m, m % 3)
+        put(t, m, 10)
+        t = platform(m % 3)
+        platform_edges(t, m)
+        put(t, m, 11)
+        t = platform(m % 3, rotten=True)
+        platform_edges(t, m)
+        put(t, m, 12)
     return a
