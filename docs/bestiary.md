@@ -117,6 +117,8 @@ whaler who ever struck it, rotten ropes trailing. A narrow toothed jaw hangs ope
 Its old eye is amber, the colour of lamplight: lamps burn whale oil. That eye is the focal accent.
 
 **Lore.** It never died. It kept every harpoon ever thrown at it, and now it gives them back.
+Hollowell's lanterns burn whale oil rendered at Tallowmouth, a dying whaling hamlet on the Mere's
+shore: the fen's one warm colour is bought with its blood, so it hunts whoever carries a lamp.
 
 **Hook: it gives them back** (proposal for `@fights`). It wrenches a harpoon out of its own hide and
 clamps it in its jaw (telegraph), then flings it: a heavy hit, and the harpoon stays in the hero,
@@ -129,4 +131,9 @@ strike the wounds. Its hide holds only so many.
 **Sprites.** `art/monsters/old_iron/`, 104x118: `normal` (spyhopping, watching), `telegraph` (it
 rears back, a harpoon pulled from its own hide clamped across its jaw, the wound bleeding), `hurt`
 (it rolls away, eye shut). It stands in its own patch of water. Source: `tools/art/old_iron.py`;
-sheet: `art/concepts/old_iron_poses.png`. Placement: it needs water - `@world`.
+sheet: `art/concepts/old_iron_poses.png`.
+
+**Placement** (`@world`). The Black Mere, the open black water between the Sallow Fen and Plenty,
+crossed by night on the ferrywoman's barge: the Mere's boss, after the Mouther and the leeches. She
+tells the hero to put Odo's lantern out - douse it and cross blind, or keep it lit and Old Iron
+comes. The battle is on the barge's deck at night: black water, fog, the barge's lantern swinging.
