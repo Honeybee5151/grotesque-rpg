@@ -7,6 +7,7 @@
     autoplay smart    tools/smoke_test.gd -- smart
     autoplay attack   tools/smoke_test.gd -- attack
     autoplay smart troop=host,host   two enemies: the target menu and multi-enemy battles
+    autoplay skills   the Skill submenu, spending MP
     export            the game.pck players get (export filters, remaps), then boot and the
                       battle run from it - catches files that work here but don't ship
     updater           tools/update_test.sh through Git Bash (only with -Updater)
@@ -28,7 +29,7 @@ param([switch]$Updater)
 $Root = Split-Path -Parent $PSScriptRoot
 $Godot = if ($env:GODOT) { $env:GODOT } else { 'godot' }
 # One autoplay per entry: the smoke_test.gd arguments (fights owns the autoplay; they say what to run).
-$Policies = @('smart', 'attack', 'smart troop=host,host')
+$Policies = @('smart', 'attack', 'smart troop=host,host', 'skills')
 
 $ErrorPattern = '^\s*(SCRIPT ERROR|USER ERROR|ERROR):|Parse Error'
 $WarningPattern = '^\s*(USER WARNING|WARNING):'
