@@ -10,6 +10,9 @@ Poses (104x118, one canvas and ground line):
   telegraph  it wrenches a harpoon out of its own hide and clamps it crosswise in its jaw, rearing
              back to fling it; the wound it came out of runs dark.
   hurt       it rolls away from the blow, the eye squeezed shut.
+  stunned    overbalanced after a guarded throw: tipped far over, wallowing, eye rolled up.
+  spent      its resting pose once the hide is empty: no harpoons left, open wounds where they were.
+  gape       the bite telegraph for that phase: no harpoon, the jaw yawning wide, the mouth pink.
 
     python tools/art/old_iron.py [OUTDIR] [poses...] [--zoom]
 
@@ -38,10 +41,16 @@ POSES = {
     "normal": dict(lean=7, dy=0, jaw="open", eye="open", torn=None),
     "telegraph": dict(lean=-11, dy=-3, dx=8, jaw="bite", eye="open", torn=3),
     "hurt": dict(lean=16, dy=3, jaw="open", eye="shut", torn=None),
+    "stunned": dict(lean=27, dy=7, dx=-13, jaw="slack", eye="rolled", torn=None),
+    "spent": dict(lean=7, dy=1, jaw="open", eye="open", torn=None, empty=True),
+    "gape": dict(lean=-4, dy=-2, dx=6, jaw="gape", eye="open", torn=None, empty=True),
 }
 LABELS = {"normal": ("normal", "watching you out of the black water"),
           "telegraph": ("telegraph", "it pulls a harpoon out to give it back"),
-          "hurt": ("hurt", "it rolls away from the blow")}
+          "hurt": ("hurt", "it rolls away from the blow"),
+          "stunned": ("stunned", "overbalanced, wallowing"),
+          "spent": ("spent", "the hide empty, every wound open"),
+          "gape": ("gape", "nothing left to throw: it opens wide")}
 DIRS = [(0.95, -0.3, 0.1), (0.9, 0.1, 0.15), (0.85, 0.4, 0.2), (0.6, -0.75, 0.15), (0.2, -1.0, 0.2),
         (-0.35, -0.9, 0.3), (0.7, -0.2, 0.7), (0.5, 0.25, 0.8), (0.95, 0.65, 0.2), (0.3, -0.55, 0.8),
         (-0.7, -0.4, 0.4)]
@@ -77,17 +86,21 @@ def build(pose):
     S.ell(T((51, 17, -2)), (24, 9, 19), m.whale, k=7.0, rot=(0, 0, P["lean"]))
     S.ell((26, 106, 6), (11, 3, 5), m.whale, k=2.0, rot=(0, 0, -22))
     S.carve_ell(T((37, 74, 14)), (3.0, 30, 6), k=1.0, rot=(0, 0, P["lean"] + 5))
+    if P["jaw"] == "gape":
+        # the jaw swung far out: the mouth carved open all down its front, pink inside
+        S.carve_ell(T((36, 74, 14)), (6.5, 31, 9), k=1.5, mat=m.meat, rot=(0, 0, P["lean"] + 5))
     # the narrow jaw: hanging open down its front, or swung up to bite on a harpoon
     S.group(k=1.5)
     hinge = T((44, 104, 12))
-    tip = T((28, 44, 18)) if P["jaw"] == "open" else T((36, 46, 17))
+    tip = {"open": T((28, 44, 18)), "bite": T((36, 46, 17)), "slack": T((24, 56, 16)),
+           "gape": T((15, 56, 20))}[P["jaw"]]
     S.cone(hinge, tip, 5.4, 3.0, m.wbelly, k=1.0)
     S.ell(hinge, (6.5, 5, 6), m.wbelly, k=2.0)
     # its old eye, by the hinge: amber, the colour of lamplight
     eye_c = T((49.5, 93, 18))
     S.group(k=1.2)
-    S.ell(T((48, 93, 15)), (5, 4.2 if P["eye"] == "open" else 3.4, 4), m.whale)
-    if P["eye"] == "open":
+    S.ell(T((48, 93, 15)), (5, 3.4 if P["eye"] == "shut" else 4.2, 4), m.whale)
+    if P["eye"] in ("open", "rolled"):
         S.group(k=0.6)
         S.sphere(eye_c, 2.9, m.amber)
     # the harpoons still in its hide (one pulled when it means to throw)
@@ -98,7 +111,7 @@ def build(pose):
         p, n = on_ellipsoid(body_c, body_r, d)
         n = unit(n + rng.normal(0, 0.15, 3) + np.array([0.0, -0.25, 0.0]))
         length = rng.uniform(13, 21)
-        if i == P["torn"]:
+        if i == P["torn"] or P.get("empty"):
             shafts.append((T(tuple(p)), None))
             continue
         tip_h = p + n * length
@@ -143,6 +156,14 @@ def build(pose):
             R.pxs([(x, y), (x + 1, y)], "#ebe3c6")
     # ropes trailing off the shafts; the torn wound running dark
     for p, tip_h in shafts:
+        if tip_h is None and P.get("empty"):
+            # an old hole where the iron was: dark, a raw rim, one short run
+            x, y = int(p[0]), int(p[1])
+            for dx, dy, col in [(0, 0, BLOOD_DK), (1, 0, BLOOD_DK), (-1, 0, BLOOD), (2, 0, BLOOD),
+                                (0, -1, BLOOD), (1, -1, BLOOD), (0, 1, BLOOD), (1, 1, BLOOD), (1, 2, BLOOD_DK)]:
+                if R.on(x + dx, y + dy, m.whale):
+                    R.px(x + dx, y + dy, col)
+            continue
         if tip_h is None:
             x, y = int(p[0]), int(p[1])
             for dx in range(-2, 3):
@@ -164,6 +185,8 @@ def build(pose):
     if P["eye"] == "open":
         R.pxs([(ex, ey - 1), (ex, ey), (ex, ey + 1)], "#140a02")
         R.px(ex - 1, ey - 1, "#fff2c0")
+    elif P["eye"] == "rolled":       # rolled up and away: a sliver of the pupil at the top
+        R.px(ex + 1, ey - 2, "#140a02")
     else:
         R.pxs([(ex - 2, ey), (ex - 1, ey + 1), (ex, ey + 1), (ex + 1, ey + 1), (ex + 2, ey)], "#06080c")
     for dx, dy in [(-7, -4), (-6, 5)]:
