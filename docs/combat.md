@@ -55,6 +55,17 @@ The battle ends when every enemy has fallen (won), the hero falls (lost), or he 
 - **Stealing** (`steal_mp`, `steal_hp`): drinks MP, or HP when there's none, and heals the user by
   what it took. It isn't damage, so Guard doesn't touch it.
 
+## Bosses
+- **Phases** (`"phases"`): an enemy walks one pattern until it has used a skill so many times
+  (`until_used`), then moves on to the next. Old Iron throws five harpoons, then it can only bite.
+  A phase can set the pose it rests in (`rest_pose`) and where it starts (`start`).
+- **Self states** (`self_states`): a move can put a state on its user (Old Iron's wrench opens a
+  wound on itself). **Wounded** stacks to 5, each +25% damage taken.
+- **Story flags in** (`context.flags`, the caller's): an enemy's `if_flags` swaps in data when a
+  flag is set (intro, pattern, an `ambush` move it makes before the first round).
+- **Backdrops:** an enemy can name its own (`"bg": "mere"`, art/battle/mere.png). The caller's `bg`
+  wins.
+
 ## Packs
 - Several enemies with the same "cycle" pattern stay in step, so a pack telegraphs together.
 - **Chorus** moves (`chorus`): when several pack members use the move in the same round, its lines
@@ -172,6 +183,37 @@ Balance (seeds 1-100, full HP):
 
 At 70 HP and the same claws, the guard habit died 42/100.
 
+### Old Iron (`old_iron`): the Black Mere's boss
+Miles' brief: a whale that hunts people with a harpoon, out of revenge. A sperm whale spyhopping out
+of the black water, bristling with the rusted harpoons of every whaler who ever struck it. It kept
+them all, and now it gives them back (lore: `docs/bestiary.md`). HP 200, DEF 0, AGI 3. No mercy.
+Fought on the ferrywoman's barge (bg `mere`).
+
+Pattern: **Thrash** (6-9) → **Wrench** (telegraph: "It wrenches a harpoon out of its own hide." A
+wound opens on it, Wounded +1) → **Throw** (12-16 plus Harpooned: 3 HP a round per harpoon, up to
+2, until a Salve or Mend). After the fifth throw its hide is empty. It rests in its `spent` pose and
+switches to **Thrash** → **Gape** (telegraph) → **Bite** (16-20; Guard only halves it).
+- Guard the throw and it glances off. Old Iron overbalances, stunned, and every open wound counts:
+  a Crush on its stun after two wrenches hits for ~60.
+- **The lamp** (world's `context.flags.lamp_lit`): lit, it comes straight for the light and thrashes
+  before the hero can act. Doused, it circles twice, searching, which gives him two free rounds. The
+  ferrywoman hints that he should douse it.
+- **The lesson:** bait the throw, brace, strike the open wounds.
+
+Balance (seeds 1-100, full HP and MP, Crush + Mend, both Salves; world heals him on the barge first):
+
+| play (autoplay policy) | lamp | wins | turns (min/avg/max) | HP left |
+|---|---|---|---|---|
+| guard every throw, Crush the stun (`expert`) | doused | 100/100 | 11 / 11.9 / 12 | 33-47 |
+| guard every throw, Crush the stun (`expert`) | lit | 100/100 | 10 / 11.9 / 12 | 26-36 |
+| guard every throw, never Crush (`smart`) | doused | 100/100 | 12 / 14.6 / 16 | 30-42 |
+| eats the first harpoon, then guards (`learner`) | doused | 100/100 | 13 / 13.9 / 17 | 25-40 (dips to ~19) |
+| never guards (`attack`) | either | 0/100 | 6-8 | dead |
+
+A boss that asks for its read: the never-guard player always dies, and anyone who catches on after
+one harpoon wins. In an earlier version the lit lamp made the fight *easier*, because opening with
+the wrench skipped a thrash. Now it costs about 9 HP.
+
 ## Starting a battle
 Agreed with world. The battle is a CanvasLayer (layer 10) that draws over the caller and keeps
 running while the caller is paused or disabled.
@@ -183,10 +225,11 @@ battle.queue_free()
 ```
 - `context`, all optional:
   - `intro`: lines replacing the first enemy's own opening.
-  - `bg`: backdrop, default `"cave"`.
+  - `bg`: backdrop, default: the first enemy's own (`"bg"` in its data), else `"cave"`.
   - `can_run`: default false.
   - `mercy`: default on if an enemy's data asks for it.
   - `hero`: `{hp, mp, items, states, skills}` carried in from outside, otherwise fresh.
+  - `flags`: story flags in, e.g. `{"lamp_lit": true}` for Old Iron.
 - `result`: `{outcome: "won" | "lost" | "fled", hero: {hp, mp, items, states}, turns, flags}`.
   States that end with the battle (Drained, Stunned) aren't carried out. `flags` holds story flags
   the fight raised (an enemy's `death_when`), e.g. `{"freed": true}`.

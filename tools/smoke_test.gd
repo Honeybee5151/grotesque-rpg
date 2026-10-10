@@ -7,24 +7,27 @@ extends SceneTree
 ## "spam" Crushes whenever it can afford to, otherwise attacks;
 ## "save" plays to free the Host's man: it never lands a blow that could kill outside a stun, and
 ## Crushes the stun; "learner" plays like "skills" but misses the first telegraph (it only starts
-## guarding once it has been Drained); "thin" focuses the weakest enemy and Crushes whenever that
+## guarding once a big move has left a state on him: Drained, Harpooned); "thin" focuses the weakest enemy and Crushes whenever that
 ## kills (a pack's answer), never guarding; "expert" answers each telegraph the way its enemy
 ## teaches (Guard a guard_blocks move, Crush a breakable inhale, thin a pack), Crushes the stun;
 ## "attack" only ever attacks: it always gets Drained, and in the tutorial mercy (1 HP floor)
 ## catches it now and then -- the summary counts how often.
 ## Any policy aims at a stunned enemy when it has a choice, then a telegraphing one, then the weakest.
 ## Options: seed=N (first seed, default 1); runs=N (battles on seeds N, N+1, ..., then a balance
-## summary); troop=host,host (enemy ids); log=1/0 (every line of every battle, default: on for a
+## summary); troop=host,host (enemy ids); flags=lamp_lit (story flags in); log=1/0 (every line,
+## default: on for a
 ## single battle). The same seed replays the same fight, so a refactor can be diffed line by line.
 
 const Data := preload("res://scripts/data.gd")
 const Battle := preload("res://scripts/battle/battle.gd")
+const EnemyAI := preload("res://scripts/battle/enemy_ai.gd")
 const MAX_FRAMES := 3000  # per battle (a tutorial fight takes ~100); past it: TIMEOUT
 
 var policy := "smart"
 var first_seed := 1
 var runs := 1
 var troop: Array = ["host"]
+var flags: Dictionary = {}
 var verbose := true
 var battle: Battle
 var turn := 0
@@ -34,6 +37,7 @@ var want := ""  # the row to pick in the submenu the last command opens (item or
 var frames := 0
 var lowest_hp := 0
 var most_drained := 0
+var scarred := false  # a big move has landed a state on the hero this battle (the learner wakes up)
 var done := false
 
 
@@ -46,6 +50,9 @@ func _initialize() -> void:
 			"seed": first_seed = int(kv[1])
 			"runs": runs = int(kv[1])
 			"troop": troop = Array(kv[1].split(","))
+			"flags":
+				for f in kv[1].split(","):
+					flags[f] = true
 			"log": log_flag = kv[1]
 			_: policy = a
 	verbose = log_flag == "1" or (log_flag == "" and runs == 1)
@@ -63,6 +70,7 @@ func _process(_delta: float) -> bool:
 		quit(1)
 		return true
 	lowest_hp = mini(lowest_hp, battle.hero.hp)
+	scarred = scarred or not battle.hero.states.is_empty()
 	most_drained = maxi(most_drained, battle.hero.stacks("drained"))
 	var v := battle.view
 	if v.menu_open:
@@ -95,9 +103,10 @@ func _run_one(s: int) -> Dictionary:
 	seen_menu = 0
 	lowest_hp = Data.HERO["max_hp"]
 	most_drained = 0
+	scarred = false
 	battle = Battle.new()
 	root.add_child(battle)
-	var r: Dictionary = await battle.run(troop)
+	var r: Dictionary = await battle.run(troop, {"flags": flags})
 	_flush()
 	var outcome: String = {"won": "VICTORY", "lost": "DEFEAT", "fled": "FLED"}[r["outcome"]]
 	var salves: int = battle.items.get("salve", 0)
@@ -161,7 +170,7 @@ func _choose() -> String:
 	var salves: int = battle.items.get("salve", 0)
 	match policy:
 		"smart", "skills", "learner":
-			if telegraph and (policy != "learner" or most_drained > 0):
+			if telegraph and (policy != "learner" or scarred):
 				return "guard"
 			if policy != "smart" and stunned and _affords("crush"):
 				return "skill:crush"
@@ -183,15 +192,16 @@ func _choose() -> String:
 				if e.alive() and e.telegraphing:
 					if "crush" in e.data.get("break", {}).get("by", []) and _affords("crush"):
 						return "skill:crush"
-					var nxt: String = e.data["pattern"][e.ai_step % e.data["pattern"].size()]
-					if Data.SKILLS[nxt].get("guard_blocks", false):
+					if Data.SKILLS[EnemyAI.peek(e)].get("guard_blocks", false):
 						return "guard"
 			if stunned and _affords("crush"):
 				return "skill:crush"
 			var hit := roundi(Data.HERO["atk"] * h.atk_mult() * float(Data.SKILLS["crush"]["power"]))
 			if battle.enemies.size() > 1 and _affords("crush") and battle.enemies.any(func(e) -> bool: return e.alive() and e.hp <= hit):
 				return "skill:crush"
-			if h.stacks("drained") > 1 and salves > 0:
+			if (h.hp < 25 or (h.stacks("harpooned") > 0 and h.hp < 45)) and _affords("mend"):
+				return "skill:mend"
+			if (h.stacks("drained") > 1 or h.stacks("harpooned") > 0) and salves > 0:
 				return "item:salve"
 		"save":
 			if telegraph:

@@ -20,6 +20,9 @@ var guarding := false        # until the start of the next round
 var telegraphing := false    # its last move was a warning; the big one comes next
 var lost_turn := false       # a skip_turn state ate its action this round
 var ai_step := 0             # where an enemy is in its pattern (scripts/battle/enemy_ai.gd)
+var phase := -1              # which of its "phases" it's in, for enemies that have them
+var used: Dictionary = {}    # skill id -> times used this battle (phases count these)
+var tele_pose := "telegraph" # the pose its current telegraph holds
 var gone := false            # died and has been cleared away
 
 
@@ -41,8 +44,13 @@ func setup_hero(carry: Dictionary = {}) -> RefCounted:
 	return self
 
 
-func setup_enemy(enemy_id: String) -> RefCounted:
-	data = Data.ENEMIES[enemy_id]
+# flags: story flags from the caller; an enemy's "if_flags" swaps in data for a flag that's set.
+func setup_enemy(enemy_id: String, flags: Dictionary = {}) -> RefCounted:
+	data = Dictionary(Data.ENEMIES[enemy_id]).duplicate()
+	var if_flags: Dictionary = data.get("if_flags", {})
+	for f in if_flags:
+		if flags.get(f, false):
+			data.merge(if_flags[f], true)
 	id = enemy_id
 	name = data["name"]
 	max_hp = data["max_hp"]

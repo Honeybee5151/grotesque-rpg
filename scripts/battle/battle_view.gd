@@ -24,7 +24,8 @@ const MENU_LEFT := 4.0
 const MENU_BOTTOM := 120.0
 # art/monsters/<sprite>/<pose>.png at 1x, all on the same canvas (up to 104x118) and standing on
 # its bottom row. Missing poses fall back to normal. In a pack, the n-th member with that sprite
-# takes <pose>_<n>.png when there is one (normal_2, normal_3...), so they aren't clones.
+# takes <pose>_<n>.png when there is one (normal_2, normal_3...), so they aren't clones. An enemy's
+# data can name extra poses ("poses": ["gape"]) for telegraphs of its own.
 const POSES := ["normal", "telegraph", "stunned", "hurt"]
 
 const SHADER := """
@@ -82,7 +83,7 @@ func build(bg: String, hero: Battler, enemies: Array) -> void:
 	for e in enemies:
 		var art: String = e.data.get("sprite", e.id)
 		nth[art] = nth.get(art, 0) + 1
-		poses.append(_load_poses(art, nth[art]))
+		poses.append(_load_poses(art, nth[art], e.data.get("poses", [])))
 		total += poses.back()["normal"].get_width()
 	var left := floorf(160.0 - total / 2.0)
 	for i in enemies.size():
@@ -165,9 +166,9 @@ func popup_enemy(b: Battler, text: String, col: Color) -> void:
 	_popup(text, _enemy_popup_pos(b), col)
 
 
-func _load_poses(art: String, nth: int) -> Dictionary:
+func _load_poses(art: String, nth: int, extra: Array = []) -> Dictionary:
 	var poses := {}
-	for pose in POSES:
+	for pose in POSES + extra:
 		for path in ["res://art/monsters/%s/%s_%d.png" % [art, pose, nth], "res://art/monsters/%s/%s.png" % [art, pose]]:
 			if ResourceLoader.exists(path):
 				poses[pose] = load(path)
@@ -408,11 +409,16 @@ func sfx(sound: String) -> void:
 # Scene building
 # ======================================================================================
 
+# "cave" is drawn in code; any other backdrop is art/battle/<bg>.png (320x180), else the cave.
 func _build_backdrop(bg: String) -> void:
-	if bg != "cave":
-		push_warning("unknown battle backdrop '%s', using the cave" % bg)
 	var back := Sprite2D.new()
-	back.texture = ImageTexture.create_from_image(Sprites.build_background())
+	var path := "res://art/battle/%s.png" % bg
+	if bg != "cave" and ResourceLoader.exists(path):
+		back.texture = load(path)
+	else:
+		if bg != "cave":
+			push_warning("no %s yet, using the cave" % path)
+		back.texture = ImageTexture.create_from_image(Sprites.build_background())
 	back.centered = false
 	add_child(back)
 

@@ -29,7 +29,8 @@ const RULES := {
 }
 
 # Skills. Damage is either "power" (x the user's attack, rolled, minus the target's defence) or
-# "dmg": [min, max] (flat roll, minus defence). "heal" restores HP. "mp" is the cost. "target":
+# "dmg": [min, max] (flat roll, minus defence). "heal" restores HP, "cures" lifts states. "mp" is
+# the cost. "self_states" land on the user. "pose" names the pose a telegraph holds. "target":
 # "self" for moves on yourself (the default is one enemy; enemies always aim at the hero).
 # "priority" acts before everyone else.
 # "telegraph" marks the warning move before a big one. "guard_blocks": a guarding target takes
@@ -70,6 +71,7 @@ const SKILLS := {
 		"mp": 3,
 		"target": "self",
 		"heal": 16,
+		"cures": ["harpooned"],
 		"lines": [{"say": "{user} presses a hand to his wounds.", "sfx": "heal"}],
 	},
 	# --- the Host: lash -> coil (telegraph) -> latch ---
@@ -117,6 +119,40 @@ const SKILLS := {
 		"steal_mp_hit": "{Target} loses {mp} MP. It swells.",
 		"steal_hp_hit": "No breath left. It drinks {hp} HP.",
 	},
+	# --- Old Iron: thrash -> wrench a harpoon out of its own hide (telegraph) -> throw it ---
+	"circle": {
+		"lines": ["Something circles under the barge."],
+	},
+	"thrash": {
+		"lines": ["{User} rolls. The black water heaves!"],
+		"dmg": [6, 9],
+		"hit": "{Target} takes {dmg} damage.",
+	},
+	"wrench": {
+		"telegraph": true,
+		"lines": [{"say": "It wrenches a harpoon out of its own hide.", "hold": 0.4,
+			"pose": "telegraph", "sfx": "coil"}],
+		"self_states": {"wounded": 1},
+	},
+	"throw": {
+		"lines": [{"say": "It hurls the harpoon at {target}!", "hold": 0.45}],
+		"dmg": [12, 16],
+		"states": {"harpooned": 1},
+		"hit": "It runs him through! {dmg} damage.",
+		"guard_blocks": true,
+		"blocked": [{"say": "It glances off his raised arm!", "sfx": "guard", "shake": true}],
+		"blocked_user_states": {"stunned": 1},
+	},
+	"gape": {
+		"telegraph": true,
+		"pose": "gape",
+		"lines": [{"say": "Its hide is bare. Its jaw yawns open.", "pose": "gape", "sfx": "coil"}],
+	},
+	"bite": {
+		"lines": [{"say": "{User} surges up, jaws first!", "hold": 0.4}],
+		"dmg": [16, 20],
+		"hit": "{Target} takes {dmg} damage.",
+	},
 	# --- Penny Leeches: nip, nip... then all rear up as one (telegraph) and all latch at once ---
 	"nip": {
 		"dmg": [1, 3],
@@ -142,7 +178,8 @@ const SKILLS := {
 # States: id -> stacks on a battler. "skip_turn" states eat the holder's next action and wear off
 # at the end of that round. "damage_taken" multiplies every hit on the holder, and its "hit" line
 # replaces the skill's own. "tick_hp"/"tick_mp" are lost per stack at the end of every round.
-# "atk_per_stack" changes attack (x(1 + n * value)). "ends_with_battle" states don't carry over.
+# "atk_per_stack" changes attack (x(1 + n * value)); "damage_taken_per_stack" multiplies hits
+# on the holder by (1 + n * value). "ends_with_battle" states don't carry over.
 # An enemy can say any of a state's lines its own way ("state_text" in ENEMIES).
 const STATES := {
 	"drained": {
@@ -154,6 +191,21 @@ const STATES := {
 		"apply": [{"say": "Drained x{stacks}! Something warm slips away.", "sfx": "drain"}],
 		"tick": [{"say": "Drained... -{hp} HP, -{mp} MP.", "hold": 0.5, "sfx": "drain"}],
 		"cure": "The drain lifts.",
+		"ends_with_battle": true,
+	},
+	"wounded": {
+		"max_stacks": 5,
+		"damage_taken_per_stack": 0.25,
+		"apply": ["{Name} bleeds from an open wound."],
+		"ends_with_battle": true,
+	},
+	"harpooned": {
+		"label": "HARPOON x{stacks}",
+		"max_stacks": 2,
+		"tick_hp": 3,
+		"apply": [{"say": "The barbs hold. {Name} is harpooned!", "sfx": "hurt"}],
+		"tick": [{"say": "The harpoon tears. -{hp} HP.", "hold": 0.5}],
+		"cure": "The harpoon comes out.",
 		"ends_with_battle": true,
 	},
 	"stunned": {
@@ -171,7 +223,7 @@ const ITEMS := {
 	"salve": {
 		"name": "Salve",
 		"heal": 15,
-		"cures": ["drained"],
+		"cures": ["drained", "harpooned"],
 		"start": 2,
 		"lines": [{"say": "{user} smears on a Salve.", "sfx": "heal"}],
 	},
@@ -184,7 +236,11 @@ const ITEMS := {
 # holding that state, and puts the flag in the battle's result. "break": {"by": [skills],
 # "state": state} -- one of those skills landing while it telegraphs breaks the telegraph and puts
 # the state on it (default "stunned"), so the big move is lost. "mercy": the hero can't drop below
-# 1 HP in a fight with it. "state_text": {state: {key: lines}} says a state's lines its own way.
+# 1 HP in a fight with it. "state_text": {state: {key: lines}} says a state's lines its own way. "phases": patterns it
+# moves through as it uses skills (scripts/battle/enemy_ai.gd). "if_flags": {flag: {data}} swaps
+# that data in when the caller's context.flags sets the flag. "poses": extra pose names to load.
+# "ambush": a skill it uses before the first round, before the hero can act. "bg": the backdrop
+# its fight uses unless the caller names one. A phase's "rest_pose" replaces normal while in it.
 const ENEMIES := {
 	"host": {
 		"name": "the Host",
@@ -221,6 +277,54 @@ const ENEMIES := {
 				"lines": ["The frog peels away, spent. The man falls.", "He's still breathing."],
 			},
 		},
+	},
+	# The Black Mere's boss (Miles' brief: a whale that hunts people with a harpoon, revenge). It
+	# kept every harpoon ever thrown at it and gives them back: each one it wrenches out opens a
+	# wound (+25% damage taken, up to 5). Guard the throw and it overbalances, stunned, so the
+	# lesson is: bait the throw, brace, strike the open wounds. Its hide holds 5; then it bites.
+	"old_iron": {
+		"name": "Old Iron",
+		"sprite": "old_iron",
+		"bg": "mere",
+		"poses": ["gape", "spent"],
+		"max_hp": 200,
+		"def": 0,
+		"agi": 3,
+		"ai": "cycle",
+		"phases": [
+			{"pattern": ["circle"], "until_used": {"circle": 2}},
+			{"pattern": ["thrash", "wrench", "throw"], "until_used": {"throw": 5}},
+			{"pattern": ["thrash", "gape", "bite"], "rest_pose": "spent"},
+		],
+		"if_flags": {
+			# A lit lamp: it comes straight for the light, striking before he can act. Doused, it
+			# circles twice, searching: two free rounds.
+			"lamp_lit": {
+				"intro": [
+					"The lamp's light spills over the Mere.",
+					"Something huge turns toward it.",
+				],
+				"ambush": "thrash",
+				"phases": [
+					{"pattern": ["thrash", "wrench", "throw"], "until_used": {"throw": 5}},
+					{"pattern": ["thrash", "gape", "bite"], "rest_pose": "spent"},
+				],
+			},
+		},
+		"state_text": {
+			"wounded": {"apply": ["The wound bleeds, black and slow."]},
+			"stunned": {
+				"apply": ["{Name} overbalances, wallowing."],
+				"hit": "{Target}'s wounds gape! It takes {dmg}.",
+				"skip": ["{Name} rolls upright, streaming."],
+			},
+		},
+		"intro": [
+			"The Mere bulges around the barge.",
+			"An amber eye opens, wide as a lamp.",
+			"Rusted harpoons bristle from its hide.",
+		],
+		"death": ["Old Iron sinks, still bristling.", "The Mere goes flat and black."],
 	},
 	# A bog body on the drowned boardwalk. Teaches Crush: break the inhale before it drinks your MP,
 	# and spend MP rather than hoard it. Guard doesn't help against the drink.
